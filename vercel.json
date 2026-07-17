@@ -1,0 +1,17 @@
+{
+  "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput",
+  "outputDirectory": "staticfiles",
+  "functions": {
+    "api/index.py": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    { "src": "/static/(.*)", "dest": "/staticfiles/$1" },
+    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/accounts/(.*)", "dest": "api/index.py" },
+    { "src": "/admin/(.*)", "dest": "api/index.py" },
+    { "src": "/.*", "dest": "api/index.py" }
+  ]
+}
