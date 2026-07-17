@@ -1,0 +1,55 @@
+msgid ""
+msgstr ""
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+
+msgid "English"
+msgstr "الإنجليزية"
+
+msgid "German"
+msgstr "الألمانية"
+
+msgid "Turkish"
+msgstr "التركية"
+
+msgid "Russian"
+msgstr "الروسية"
+
+msgid "Arabic"
+msgstr "العربية"
+
+msgid "Beginner"
+msgstr "مبتدئ"
+
+msgid "Intermediate"
+msgstr "متوسط"
+
+msgid "Advanced"
+msgstr "متقدم"
+
+msgid "Text"
+msgstr "نص"
+
+msgid "Code Challenge"
+msgstr "تحدي برمجي"
+
+msgid "Quiz"
+msgstr "اختبار"
+
+msgid "Multiple Choice"
+msgstr "اختيار من متعدد"
+
+msgid "True/False"
+msgstr "صح/خطأ"
+
+msgid "Fill in the Blank"
+msgstr "املأ الفراغ"
+
+msgid "Lesson"
+msgstr "درس"
+
+msgid "Challenge"
+msgstr "تحد"
