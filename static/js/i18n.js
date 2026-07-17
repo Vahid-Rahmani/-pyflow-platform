@@ -3,7 +3,7 @@ const I18n = {
 
     translations: {
         en: {
-            'app.name': 'PythonAI',
+            'app.name': 'LearnApp',
             'app.tagline': 'Learn Python. Build the future.',
             'nav.home': 'Home',
             'nav.leaderboard': 'Leaderboard',
@@ -38,7 +38,7 @@ const I18n = {
             'progress.no_leaderboard': 'No data yet.',
         },
         de: {
-            'app.name': 'PythonAI',
+            'app.name': 'LearnApp',
             'app.tagline': 'Lerne Python. Baue die Zukunft.',
             'nav.home': 'Start',
             'nav.leaderboard': 'Rangliste',
@@ -58,7 +58,7 @@ const I18n = {
             'btn.logout': 'Abmelden',
         },
         tr: {
-            'app.name': 'PythonAI',
+            'app.name': 'LearnApp',
             'app.tagline': 'Python öğren. Geleceği inşa et.',
             'nav.home': 'Ana Sayfa',
             'nav.leaderboard': 'Sıralama',
@@ -78,7 +78,7 @@ const I18n = {
             'btn.logout': 'Çıkış Yap',
         },
         ru: {
-            'app.name': 'PythonAI',
+            'app.name': 'LearnApp',
             'app.tagline': 'Изучай Python. Строй будущее.',
             'nav.home': 'Главная',
             'nav.leaderboard': 'Таблица лидеров',
@@ -98,7 +98,7 @@ const I18n = {
             'btn.logout': 'Выйти',
         },
         ar: {
-            'app.name': 'PythonAI',
+            'app.name': 'LearnApp',
             'app.tagline': 'تعلم بايثون. ابنِ المستقبل.',
             'nav.home': 'الرئيسية',
             'nav.leaderboard': 'لوحة المتصدرين',

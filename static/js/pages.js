@@ -2,27 +2,48 @@ const Pages = {
     async dashboard() {
         const app = document.getElementById('app');
         app.innerHTML = '';
-        app.appendChild(Components.pageHeader('PythonAI', 'Learn Python interactively'));
         const user = Auth.user;
-        if (user) {
+        const isGuest = Auth.isGuest();
+
+        const hasUser = user && !isGuest;
+        const welcomeMsg = isGuest ? 'Explore courses as a guest' : (hasUser ? 'Continue your journey' : 'Learn Python interactively');
+
+        app.appendChild(Components.pageHeader('LearnApp', welcomeMsg));
+
+        if (hasUser) {
             app.appendChild(Components.statCards([
                 { value: user.xp, label: 'XP' },
                 { value: user.level, label: 'Level' },
                 { value: user.streak_count || 0, label: 'Day Streak' },
             ]));
+        } else if (isGuest) {
+            const guestBanner = document.createElement('div');
+            guestBanner.style.cssText = 'margin:0 16px 12px;padding:12px 16px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;';
+            guestBanner.innerHTML = `
+                <div style="font-size:13px;">👤 Browsing as <strong>Guest</strong></div>
+                <button class="btn btn-sm btn-primary" onclick="App.navigate('login')" style="width:auto;">Log in</button>
+            `;
+            app.appendChild(guestBanner);
         }
+
+        const quickActions = document.createElement('div');
+        quickActions.style.cssText = 'padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap;';
+        quickActions.innerHTML = `
+            <button class="btn btn-sm btn-primary" onclick="App.navigate('projects')" style="flex:1;min-width:100px;">📁 My Projects</button>
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('projects/new')" style="flex:1;min-width:100px;">➕ New Project</button>
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('leaderboard')" style="flex:1;min-width:100px;">🏆 Leaderboard</button>
+        `;
+        app.appendChild(quickActions);
+
+        const sectionTitle = document.createElement('div');
+        sectionTitle.style.cssText = 'padding:16px 16px 4px;font-size:14px;font-weight:600;color:var(--text-secondary);';
+        sectionTitle.textContent = '📚 Courses';
+        app.appendChild(sectionTitle);
+
         const container = document.createElement('div');
         container.className = 'course-list';
         container.appendChild(Components.spinner());
         app.appendChild(container);
-
-        const quickActions = document.createElement('div');
-        quickActions.style.cssText = 'padding: 8px 16px; display: flex; gap: 8px;';
-        quickActions.innerHTML = `
-            <button class="btn btn-sm btn-primary" onclick="App.navigate('projects')" style="flex:1;">📁 My Projects</button>
-            <button class="btn btn-sm btn-secondary" onclick="App.navigate('projects/new')" style="flex:1;">➕ New Project</button>
-        `;
-        app.appendChild(quickActions);
 
         const { ok, data } = await API.get('/courses/');
         container.innerHTML = '';
@@ -31,6 +52,17 @@ const Pages = {
         } else {
             container.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-muted);">No courses available yet.</p>';
         }
+
+        if (isGuest) {
+            const cta = document.createElement('div');
+            cta.style.cssText = 'padding:16px;text-align:center;';
+            cta.innerHTML = `
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Sign up to save your progress!</div>
+                <button class="btn btn-primary" onclick="App.navigate('register')" style="max-width:200px;margin:0 auto;">Create Free Account</button>
+            `;
+            app.appendChild(cta);
+        }
+
         app.appendChild(Components.nav([
             { id: 'dashboard', icon: '🏠', label: 'Home' },
             { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
@@ -556,8 +588,27 @@ const Pages = {
         app.innerHTML = '';
         app.appendChild(Components.pageHeader('Profile'));
         const user = Auth.user;
+        const isGuest = Auth.isGuest();
         if (!user) {
             app.innerHTML += '<p style="padding:20px;">Please log in.</p>';
+            return;
+        }
+        if (isGuest) {
+            const guestCard = document.createElement('div');
+            guestCard.style.cssText = 'margin:16px;padding:24px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);text-align:center;';
+            guestCard.innerHTML = `
+                <div style="font-size:48px;margin-bottom:12px;">👤</div>
+                <div style="font-size:20px;font-weight:700;margin-bottom:4px;">Guest</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">You are browsing as a guest. Sign up to save progress and get full access!</div>
+                <button class="btn btn-primary" onclick="App.navigate('register')">Create Free Account</button>
+                <button class="btn btn-secondary" onclick="Auth.logout()" style="margin-top:8px;">Switch Account</button>
+            `;
+            app.appendChild(guestCard);
+            app.appendChild(Components.nav([
+                { id: 'dashboard', icon: '🏠', label: 'Home' },
+                { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
+                { id: 'profile', icon: '👤', label: 'Profile' },
+            ], 'profile'));
             return;
         }
         const card = document.createElement('div');
@@ -699,7 +750,7 @@ const Pages = {
         const app = document.getElementById('app');
         app.innerHTML = `
             <div class="auth-page">
-                <div class="logo">PythonAI</div>
+                <div class="logo">LearnApp</div>
                 <div class="tagline">Learn Python. Build the future.</div>
                 <div class="form-group">
                     <label>Username or Email</label>
@@ -713,6 +764,13 @@ const Pages = {
                 <div style="margin:16px 0;text-align:center;color:var(--text-muted);">or continue with</div>
                 <button class="btn btn-secondary" id="google-login" style="margin-bottom:8px;">
                     <span style="font-size:18px;">G</span> Sign in with Google
+                </button>
+                <div style="margin:12px 0;position:relative;text-align:center;">
+                    <div style="border-top:1px solid var(--border);margin:16px 0;"></div>
+                    <span style="position:relative;top:-24px;background:var(--bg-primary);padding:0 12px;color:var(--text-muted);font-size:12px;">or</span>
+                </div>
+                <button class="btn btn-secondary" id="guest-btn" style="margin-bottom:8px;">
+                    👤 Continue as Guest
                 </button>
                 <div class="form-link">Don't have an account? <a id="go-register">Sign up</a></div>
                 <div id="login-error" style="color:var(--error);font-size:13px;margin-top:12px;"></div>
@@ -739,6 +797,10 @@ const Pages = {
         document.getElementById('google-login').onclick = () => {
             window.location.href = '/accounts/google/login/';
         };
+        document.getElementById('guest-btn').onclick = () => {
+            Auth.enableGuest();
+            App.navigate('dashboard');
+        };
         document.getElementById('go-register').onclick = () => App.navigate('register');
     },
 
@@ -746,7 +808,7 @@ const Pages = {
         const app = document.getElementById('app');
         app.innerHTML = `
             <div class="auth-page">
-                <div class="logo">PythonAI</div>
+                <div class="logo">LearnApp</div>
                 <div class="tagline">Start your journey today</div>
                 <div class="form-group">
                     <label>Username</label>

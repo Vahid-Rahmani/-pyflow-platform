@@ -2,11 +2,23 @@ const Auth = {
     user: null,
 
     async loadUser() {
-        if (!API.isAuthenticated()) return null;
-        const { ok, data } = await API.get('/auth/me/');
+        if (API.isAuthenticated()) {
+            const { ok, data } = await API.get('/auth/me/');
+            if (ok) {
+                this.user = data;
+                return data;
+            }
+        }
+        const guest = localStorage.getItem('guest_mode');
+        if (guest === 'true') {
+            this.user = { username: 'Guest', xp: 0, level: 1, streak_count: 0, onboarding_complete: true };
+            return this.user;
+        }
+        const { ok, data } = await API.get('/auth/session-token/', false);
         if (ok) {
-            this.user = data;
-            return data;
+            API.setTokens(data.access, data.refresh);
+            this.user = data.user;
+            return data.user;
         }
         return null;
     },
@@ -34,8 +46,22 @@ const Auth = {
         return { ok: false, error: msg };
     },
 
+    enableGuest() {
+        localStorage.setItem('guest_mode', 'true');
+        this.user = { username: 'Guest', xp: 0, level: 1, streak_count: 0, onboarding_complete: true };
+    },
+
+    disableGuest() {
+        localStorage.removeItem('guest_mode');
+    },
+
+    isGuest() {
+        return localStorage.getItem('guest_mode') === 'true';
+    },
+
     async logout() {
         API.clearTokens();
+        this.disableGuest();
         this.user = null;
         App.navigate('login');
     },

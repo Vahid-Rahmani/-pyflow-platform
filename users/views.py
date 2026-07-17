@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login as django_login
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     UserSerializer, RegisterSerializer, ChangePasswordSerializer,
@@ -124,4 +124,16 @@ class MyRoadmapView(APIView):
             'milestones': milestones,
             'progress': sum(1 for m in milestones if m['completed']),
             'total': len(milestones),
+        })
+
+
+class SessionTokenView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        refresh = RefreshToken.for_user(request.user)
+        return Response({
+            'user': UserSerializer(request.user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
         })

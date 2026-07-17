@@ -2,8 +2,13 @@ const App = {
     currentPage: null,
 
     async init() {
-        if (API.isAuthenticated()) {
-            await Auth.loadUser();
+        await Auth.loadUser();
+        if (Auth.user && !Auth.isGuest()) {
+            const onboardingRes = await API.get('/auth/onboarding/');
+            if (onboardingRes.ok && !onboardingRes.data.onboarding_complete) {
+                this.navigate('onboarding');
+                return;
+            }
         }
         const path = window.location.pathname;
         this.routePath(path);
@@ -12,7 +17,7 @@ const App = {
 
     routePath(path) {
         if (path === '/' || path === '') {
-            this.navigate(API.isAuthenticated() ? 'dashboard' : 'login');
+            this.navigate(API.isAuthenticated() || Auth.isGuest() ? 'dashboard' : 'login');
             return;
         }
         const parts = path.split('/').filter(Boolean);
@@ -26,14 +31,14 @@ const App = {
     },
 
     async navigate(page) {
-        const loggedIn = API.isAuthenticated();
-        if (!loggedIn && page !== 'login' && page !== 'register') {
+        const hasAuth = API.isAuthenticated() || Auth.isGuest();
+        if (!hasAuth && page !== 'login' && page !== 'register') {
             page = 'login';
         }
-        if (loggedIn && (page === 'login' || page === 'register')) {
+        if (hasAuth && (page === 'login' || page === 'register')) {
             page = 'dashboard';
         }
-        if (loggedIn && page === 'dashboard' && Auth.user) {
+        if (hasAuth && page === 'dashboard' && Auth.user && !Auth.isGuest()) {
             const onboardingRes = await API.get('/auth/onboarding/');
             if (onboardingRes.ok && !onboardingRes.data.onboarding_complete) {
                 page = 'onboarding';
@@ -42,7 +47,7 @@ const App = {
         this.currentPage = page;
         const url = page === 'dashboard' ? '/' : `/${page}`;
         window.history.pushState({ page }, '', url);
-        document.title = `PythonAI${page !== 'dashboard' ? ' - ' + page : ''}`;
+        document.title = `LearnApp${page !== 'dashboard' ? ' - ' + page : ''}`;
         const parts = page.split('/');
         const base = parts[0];
         const id = parts[1];

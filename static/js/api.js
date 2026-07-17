@@ -11,6 +11,7 @@ const API = {
     async request(method, path, data = null, auth = true) {
         const url = this.BASE + path;
         const headers = { 'Content-Type': 'application/json' };
+        if (auth === undefined) auth = true;
         if (auth) {
             const { access } = this.getTokens();
             if (access) headers['Authorization'] = `Bearer ${access}`;
@@ -22,11 +23,15 @@ const API = {
             const refreshed = await this.refreshToken();
             if (refreshed) return this.request(method, path, data, auth);
         }
-        const json = await res.json();
-        return { ok: res.ok, status: res.status, data: json };
+        try {
+            const json = await res.json();
+            return { ok: res.ok, status: res.status, data: json };
+        } catch {
+            return { ok: res.ok, status: res.status, data: {} };
+        }
     },
 
-    async get(path) { return this.request('GET', path); },
+    async get(path, auth = true) { return this.request('GET', path, null, auth); },
     async post(path, data) { return this.request('POST', path, data); },
     async put(path, data) { return this.request('PUT', path, data); },
     async patch(path, data) { return this.request('PATCH', path, data); },

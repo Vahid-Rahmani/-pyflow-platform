@@ -173,7 +173,7 @@ function showChatPanel() {
     panel.id = 'chat-panel';
     panel.innerHTML = `
         <div class="chat-header">
-            <h3>🤖 PythonAI Tutor</h3>
+            <h3>🤖 LearnApp Tutor</h3>
             <button class="chat-close" id="chat-close">✕</button>
         </div>
         <div class="chat-messages" id="chat-messages">

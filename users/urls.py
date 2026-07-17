@@ -13,4 +13,5 @@ urlpatterns = [
     path('onboarding/', views.OnboardingView.as_view(), name='auth-onboarding'),
     path('roadmaps/', views.RoadmapListView.as_view(), name='auth-roadmaps'),
     path('my-roadmap/', views.MyRoadmapView.as_view(), name='auth-my-roadmap'),
+    path('session-token/', views.SessionTokenView.as_view(), name='auth-session-token'),
 ]

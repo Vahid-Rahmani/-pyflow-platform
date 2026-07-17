@@ -1,6 +1,6 @@
 {
-    "name": "PythonAI - Learn Python",
-    "short_name": "PythonAI",
+    "name": "LearnApp - Learn Python",
+    "short_name": "LearnApp",
     "description": "Interactive Python programming education platform",
     "start_url": "/",
     "display": "standalone",
