@@ -11,7 +11,17 @@ const Auth = {
         }
         const guest = localStorage.getItem('guest_mode');
         if (guest === 'true') {
-            this.user = { username: 'Guest', xp: 0, level: 1, streak_count: 0, onboarding_complete: true };
+            const profile = this.loadGuestProfile();
+            this.user = {
+                username: profile.name || 'Guest',
+                xp: parseInt(localStorage.getItem('guest_xp') || '0'),
+                level: parseInt(localStorage.getItem('guest_level') || '1'),
+                streak_count: parseInt(localStorage.getItem('guest_streak') || '0'),
+                onboarding_complete: !!profile.name,
+                name: profile.name || '',
+                age: profile.age || '',
+                goal: profile.goal || '',
+            };
             return this.user;
         }
         const { ok, data } = await API.get('/auth/session-token/', false);
@@ -21,6 +31,16 @@ const Auth = {
             return data.user;
         }
         return null;
+    },
+
+    loadGuestProfile() {
+        try {
+            return JSON.parse(localStorage.getItem('guest_profile') || '{}');
+        } catch { return {}; }
+    },
+
+    saveGuestProfile(profile) {
+        localStorage.setItem('guest_profile', JSON.stringify(profile));
     },
 
     async login(username, password) {
@@ -50,7 +70,6 @@ const Auth = {
 
     enableGuest() {
         localStorage.setItem('guest_mode', 'true');
-        this.user = { username: 'Guest', xp: 0, level: 1, streak_count: 0, onboarding_complete: true };
     },
 
     disableGuest() {

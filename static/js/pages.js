@@ -1,29 +1,36 @@
+const FALLBACK_COURSES = [
+    { title: 'Python Basics', slug: 'python-basics', short_description: 'Start here! Learn variables, loops, and functions.', difficulty: 'beginner', module_count: 4, lesson_count: 12 },
+    { title: 'Data Structures', slug: 'data-structures', short_description: 'Lists, dictionaries, sets, and tuples.', difficulty: 'beginner', module_count: 3, lesson_count: 10 },
+    { title: 'Web Scraping', slug: 'web-scraping', short_description: 'Extract data from websites with Python.', difficulty: 'intermediate', module_count: 3, lesson_count: 9 },
+    { title: 'APIs & Automation', slug: 'apis-automation', short_description: 'Build APIs and automate workflows.', difficulty: 'intermediate', module_count: 4, lesson_count: 14 },
+];
+
 const Pages = {
     async dashboard() {
         const app = document.getElementById('app');
         app.innerHTML = '';
-        const user = Auth.user;
-        const isGuest = Auth.isGuest();
 
-        const welcomeMsg = user ? (isGuest ? 'Explore as a guest' : 'Continue your journey') : 'Learn Python interactively';
+        app.appendChild(Components.pageHeader('LearnApp', 'Learn Python interactively'));
 
-        app.appendChild(Components.pageHeader('LearnApp', welcomeMsg));
-
-        if (isGuest) {
-            const guestBanner = document.createElement('div');
-            guestBanner.style.cssText = 'margin:0 16px 12px;padding:10px 16px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;';
-            guestBanner.innerHTML = `
-                <div style="font-size:13px;display:flex;align-items:center;gap:6px;"><span>👤</span> Browsing as <strong>Guest</strong></div>
-                <button class="btn btn-sm btn-primary" onclick="App.navigate('register')" style="width:auto;font-size:11px;padding:6px 12px;">Sign up free</button>
-            `;
-            app.appendChild(guestBanner);
+        // Show small closable guest notification instead of big banner
+        if (Auth.isGuest()) {
+            app.appendChild(Components.guestNotification());
         }
 
-        if (user) {
+        if (Auth.user && Auth.isGuest()) {
+            const profile = Auth.loadGuestProfile();
+            if (profile.name) {
+                app.appendChild(Components.statCards([
+                    { value: '0 XP', label: 'XP' },
+                    { value: 'Level 1', label: 'Level' },
+                    { value: '0', label: 'Day Streak' },
+                ]));
+            }
+        } else if (Auth.user) {
             app.appendChild(Components.statCards([
-                { value: isGuest ? '-' : user.xp, label: 'XP' },
-                { value: isGuest ? '-' : user.level, label: 'Level' },
-                { value: isGuest ? '-' : (user.streak_count || 0), label: 'Day Streak' },
+                { value: Auth.user.xp, label: 'XP' },
+                { value: Auth.user.level, label: 'Level' },
+                { value: Auth.user.streak_count || 0, label: 'Day Streak' },
             ]));
         }
 
@@ -32,7 +39,7 @@ const Pages = {
         quickActions.innerHTML = `
             <button class="btn btn-sm btn-secondary" onclick="App.navigate('leaderboard')" style="flex:1;min-width:100px;">🏆 Leaderboard</button>
             <button class="btn btn-sm btn-secondary" onclick="App.navigate('profile')" style="flex:1;min-width:100px;">👤 Profile</button>
-            ${isGuest ? '' : '<button class="btn btn-sm btn-secondary" onclick="App.navigate(\'projects\')" style="flex:1;min-width:100px;">📁 Projects</button>'}
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('projects')" style="flex:1;min-width:100px;">📁 Projects</button>
         `;
         app.appendChild(quickActions);
 
@@ -46,22 +53,13 @@ const Pages = {
         container.appendChild(Components.spinner());
         app.appendChild(container);
 
-        const { ok, data } = await API.get('/courses/', !isGuest);
+        const { ok, data } = await API.get('/courses/', !Auth.isGuest());
         container.innerHTML = '';
-        if (ok && data.results) {
+        if (ok && data.results && data.results.length > 0) {
             data.results.forEach(c => container.appendChild(Components.courseCard(c)));
         } else {
-            container.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-muted);">No courses available yet.</p>';
-        }
-
-        if (isGuest) {
-            const cta = document.createElement('div');
-            cta.style.cssText = 'padding:16px;text-align:center;';
-            cta.innerHTML = `
-                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Sign up to save your progress!</div>
-                <button class="btn btn-primary" onclick="App.navigate('register')" style="max-width:200px;margin:0 auto;">Create Free Account</button>
-            `;
-            app.appendChild(cta);
+            // Show placeholder courses when API fails or returns empty
+            FALLBACK_COURSES.forEach(c => container.appendChild(Components.courseCard(c)));
         }
 
         app.appendChild(Components.nav([
@@ -595,16 +593,17 @@ const Pages = {
             return;
         }
         if (isGuest) {
+            const profile = Auth.loadGuestProfile();
             const guestCard = document.createElement('div');
             guestCard.style.cssText = 'margin:16px;padding:24px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);text-align:center;';
             guestCard.innerHTML = `
                 <div style="font-size:48px;margin-bottom:12px;">👤</div>
-                <div style="font-size:20px;font-weight:700;margin-bottom:4px;">Guest</div>
-                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">You are browsing as a guest.</div>
-                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Sign up to save progress and unlock all features!</div>
+                <div style="font-size:20px;font-weight:700;margin-bottom:4px;">${profile.name || 'Guest'}</div>
+                ${profile.age ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Age: ${profile.age}</div>` : ''}
+                ${profile.goal ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">Goal: ${profile.goal}</div>` : ''}
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">${profile.name ? 'Browsing as a guest — sign up to save progress!' : 'You are browsing as a guest. Sign up to save progress and unlock all features!'}</div>
                 <button class="btn btn-primary" onclick="App.navigate('register')">Create Free Account</button>
                 <button class="btn btn-secondary" onclick="App.navigate('login')" style="margin-top:8px;">I have an account</button>
-                <button class="btn btn-sm btn-secondary" onclick="Auth.logout()" style="margin-top:8px;width:auto;">← Back to login</button>
             `;
             app.appendChild(guestCard);
             app.appendChild(Components.nav([
@@ -777,6 +776,7 @@ const Pages = {
                 </button>
                 <div class="form-link">Don't have an account? <a id="go-register">Sign up</a></div>
                 <div id="login-error" style="color:var(--error);font-size:13px;margin-top:12px;"></div>
+                <div class="form-link" style="margin-top:8px;"><a id="go-dashboard">← Back to Dashboard</a></div>
             </div>
         `;
         document.getElementById('login-btn').onclick = async () => {
@@ -786,12 +786,7 @@ const Pages = {
             err.textContent = '';
             const result = await Auth.login(username, password);
             if (result.ok) {
-                const onboarding = await API.get('/auth/onboarding/');
-                if (onboarding.ok && onboarding.data.onboarding_complete) {
-                    App.navigate('dashboard');
-                } else {
-                    App.navigate('onboarding');
-                }
+                App.navigate('dashboard');
             } else err.textContent = result.error;
         };
         document.getElementById('login-pass').onkeydown = (e) => {
@@ -805,6 +800,7 @@ const Pages = {
             App.navigate('dashboard');
         };
         document.getElementById('go-register').onclick = () => App.navigate('register');
+        document.getElementById('go-dashboard').onclick = () => App.navigate('dashboard');
     },
 
     async register() {
@@ -838,6 +834,7 @@ const Pages = {
                 <button class="btn btn-primary" id="reg-btn">Create Account</button>
                 <div class="form-link">Already have an account? <a id="go-login">Log in</a></div>
                 <div id="reg-error" style="color:var(--error);font-size:13px;margin-top:12px;"></div>
+                <div class="form-link" style="margin-top:8px;"><a id="go-dashboard">← Back to Dashboard</a></div>
             </div>
         `;
         document.getElementById('reg-btn').onclick = async () => {
@@ -850,105 +847,11 @@ const Pages = {
             if (!username || !email || !password) { err.textContent = 'All fields required'; return; }
             const result = await Auth.register(username, email, password, lang);
             if (result.ok) {
-                App.navigate('onboarding');
+                App.navigate('dashboard');
             } else err.textContent = result.error;
         };
         document.getElementById('go-login').onclick = () => App.navigate('login');
-    },
-
-    async onboarding() {
-        const app = document.getElementById('app');
-        const levels = {
-            'beginner': { emoji: '🌱', desc: "I've never written code before" },
-            'basic': { emoji: '📚', desc: "I know some basics (variables, loops)" },
-            'intermediate': { emoji: '💪', desc: "I can build things but want to level up" },
-            'advanced': { emoji: '🚀', desc: "I'm a professional looking to specialize" },
-        };
-        const goals = {
-            'learn': { emoji: '🎯', desc: 'Learn programming from scratch' },
-            'job': { emoji: '💼', desc: 'Get a developer job' },
-            'ai': { emoji: '🤖', desc: 'Build AI tools and models' },
-            'automate': { emoji: '⚡', desc: 'Automate repetitive tasks' },
-            'web': { emoji: '🌐', desc: 'Create websites and web apps' },
-            'apps': { emoji: '📱', desc: 'Build desktop/mobile apps' },
-        };
-
-        let step = 1;
-        let selectedLevel = null;
-        let selectedGoal = null;
-
-        function render() {
-            if (step === 1) {
-                app.innerHTML = `
-                    <div class="auth-page" style="justify-content:flex-start;padding-top:60px;">
-                        <div style="font-size:14px;color:var(--text-muted);margin-bottom:8px;">Step 1 of 2</div>
-                        <h2 style="font-size:24px;margin-bottom:4px;">What's your level?</h2>
-                        <p style="color:var(--text-secondary);margin-bottom:24px;font-size:14px;">This helps us customize your learning path</p>
-                        ${Object.entries(levels).map(([key, v]) => `
-                            <div class="quiz-option" data-value="${key}" style="margin-bottom:8px;">
-                                <span style="font-size:24px;margin-right:12px;">${v.emoji}</span>
-                                <div>
-                                    <div style="font-weight:600;">${key.charAt(0).toUpperCase() + key.slice(1)}</div>
-                                    <div style="font-size:12px;color:var(--text-secondary);">${v.desc}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                        <div id="onboarding-error" style="color:var(--error);font-size:13px;margin-top:8px;"></div>
-                    </div>
-                `;
-                app.querySelectorAll('.quiz-option').forEach(el => {
-                    el.onclick = () => {
-                        app.querySelectorAll('.quiz-option').forEach(x => x.classList.remove('selected'));
-                        el.classList.add('selected');
-                        selectedLevel = el.dataset.value;
-                        document.getElementById('onboarding-error').textContent = '';
-                        setTimeout(() => { step = 2; render(); }, 300);
-                    };
-                });
-            } else if (step === 2) {
-                app.innerHTML = `
-                    <div class="auth-page" style="justify-content:flex-start;padding-top:60px;">
-                        <div style="font-size:14px;color:var(--text-muted);margin-bottom:8px;">Step 2 of 2</div>
-                        <h2 style="font-size:24px;margin-bottom:4px;">What's your goal?</h2>
-                        <p style="color:var(--text-secondary);margin-bottom:24px;font-size:14px;">What do you want to achieve with Python?</p>
-                        ${Object.entries(goals).map(([key, v]) => `
-                            <div class="quiz-option" data-value="${key}" style="margin-bottom:8px;">
-                                <span style="font-size:24px;margin-right:12px;">${v.emoji}</span>
-                                <div>
-                                    <div style="font-weight:600;">${v.desc}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                        <div id="onboarding-error" style="color:var(--error);font-size:13px;margin-top:8px;"></div>
-                    </div>
-                `;
-                app.querySelectorAll('.quiz-option').forEach(el => {
-                    el.onclick = () => {
-                        app.querySelectorAll('.quiz-option').forEach(x => x.classList.remove('selected'));
-                        el.classList.add('selected');
-                        selectedGoal = el.dataset.value;
-                        submitOnboarding();
-                    };
-                });
-            }
-        }
-
-        async function submitOnboarding() {
-            const res = await API.post('/auth/onboarding/', {
-                programming_level: selectedLevel,
-                goal: selectedGoal,
-            });
-            if (res.ok) {
-                Auth.user.programming_level = selectedLevel;
-                Auth.user.goal = selectedGoal;
-                Auth.user.onboarding_complete = true;
-                App.navigate('roadmap');
-            } else {
-                document.getElementById('onboarding-error').textContent = 'Something went wrong. Please try again.';
-            }
-        }
-
-        render();
+        document.getElementById('go-dashboard').onclick = () => App.navigate('dashboard');
     },
 
     async roadmap() {
@@ -957,18 +860,18 @@ const Pages = {
         app.appendChild(Components.spinner());
         const { ok, data } = await API.get('/auth/my-roadmap/');
         app.innerHTML = '';
-        if (!ok) { app.innerHTML = '<p style="padding:20px;">Could not load your roadmap.</p>'; return; }
-
+        if (!ok) {
+            app.innerHTML = '<p style="padding:20px;">Could not load your roadmap. <a style="color:var(--accent);cursor:pointer;" onclick="App.navigate(\'dashboard\')">Back to dashboard</a></p>';
+            return;
+        }
         const header = document.createElement('div');
         header.className = 'page-header';
         header.innerHTML = `<h1>Your Roadmap</h1><div class="subtitle">${data.title}</div>`;
         app.appendChild(header);
-
         const desc = document.createElement('div');
         desc.style.cssText = 'padding:0 16px 16px;font-size:14px;color:var(--text-secondary);';
         desc.textContent = data.description;
         app.appendChild(desc);
-
         const progress = Math.round((data.progress / data.total) * 100) || 0;
         const progressBar = document.createElement('div');
         progressBar.style.cssText = 'margin:0 16px 16px;';
@@ -981,29 +884,16 @@ const Pages = {
             </div>
         `;
         app.appendChild(progressBar);
-
-        data.milestones.forEach((m, i) => {
+        (data.milestones || []).forEach((m, i) => {
             const card = document.createElement('div');
             card.style.cssText = 'margin:8px 16px;padding:14px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border);display:flex;align-items:center;gap:12px;';
             const status = m.completed ? '✅' : `${i + 1}`;
-            const statusStyle = m.completed ? '' : 'width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--bg-primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;';
             card.innerHTML = `
-                <div style="${statusStyle}">${status}</div>
-                <div style="flex:1;">
-                    <div style="font-weight:600;font-size:14px;">${m.title}</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">${m.description}</div>
-                </div>
+                <div style="width:32px;height:32px;border-radius:50%;background:${m.completed ? 'var(--success-bg, rgba(0,200,83,0.1))' : 'var(--bg-primary)'};border:2px solid ${m.completed ? 'var(--success, #00c853)' : 'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${m.completed ? 'var(--success, #00c853)' : 'var(--text-secondary)'};">${status}</div>
+                <div style="flex:1;"><div style="font-weight:500;">${m.title}</div><div style="font-size:12px;color:var(--text-secondary);">${m.description || ''}</div></div>
             `;
             app.appendChild(card);
         });
-
-        const btnDiv = document.createElement('div');
-        btnDiv.className = 'btn-group';
-        btnDiv.innerHTML = '<button class="btn btn-primary" id="start-learning">Start Learning!</button>';
-        app.appendChild(btnDiv);
-
-        document.getElementById('start-learning').onclick = () => App.navigate('dashboard');
-
         app.appendChild(Components.nav([
             { id: 'dashboard', icon: '🏠', label: 'Home' },
             { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },

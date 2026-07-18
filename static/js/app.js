@@ -2,14 +2,11 @@ const App = {
     currentPage: null,
 
     async init() {
-        await Auth.loadUser();
-        if (Auth.user && !Auth.isGuest()) {
-            const onboardingRes = await API.get('/auth/onboarding/');
-            if (onboardingRes.ok && !onboardingRes.data.onboarding_complete) {
-                this.navigate('onboarding');
-                return;
-            }
+        // Auto-enable guest mode for first-time visitors
+        if (!API.isAuthenticated() && !Auth.isGuest()) {
+            Auth.enableGuest();
         }
+        await Auth.loadUser();
         const path = window.location.pathname;
         this.routePath(path);
         window.addEventListener('popstate', () => this.routePath(window.location.pathname));
@@ -17,7 +14,7 @@ const App = {
 
     routePath(path) {
         if (path === '/' || path === '') {
-            this.navigate(this.canAccess() ? 'dashboard' : 'login');
+            this.navigate('dashboard');
             return;
         }
         const parts = path.split('/').filter(Boolean);
@@ -42,22 +39,10 @@ const App = {
         const loggedIn = this.isLoggedIn();
         const canBrowse = this.canAccess();
 
-        // Unauthenticated (no JWT, no guest) can only see login/register
-        if (!canBrowse && page !== 'login' && page !== 'register') {
-            page = 'login';
-        }
-
-        // Fully logged-in users skip login/register pages
+        // Completely open access - login/register are optional
+        // Only redirect logged-in users away from auth pages
         if (loggedIn && (page === 'login' || page === 'register')) {
             page = 'dashboard';
-        }
-
-        // Check onboarding for registered users
-        if (loggedIn && page === 'dashboard' && Auth.user) {
-            const onboardingRes = await API.get('/auth/onboarding/');
-            if (onboardingRes.ok && !onboardingRes.data.onboarding_complete) {
-                page = 'onboarding';
-            }
         }
 
         this.currentPage = page;
@@ -70,7 +55,6 @@ const App = {
         switch (base) {
             case 'login': await Pages.login(); break;
             case 'register': await Pages.register(); break;
-            case 'onboarding': await Pages.onboarding(); break;
             case 'roadmap': await Pages.roadmap(); break;
             case 'dashboard': await Pages.dashboard(); break;
             case 'course': await Pages.courseDetail(id); break;
@@ -85,6 +69,14 @@ const App = {
                 if (id === 'new') { await Pages.projectNew(); break; }
                 await Pages.projectDetail(parseInt(id)); break;
             default: await Pages.dashboard(); break;
+        }
+
+        // Show onboarding overlay if guest hasn't completed it
+        if (page !== 'login' && page !== 'register') {
+            const profile = Auth.loadGuestProfile();
+            if (Auth.isGuest() && (!profile.name || !profile.age)) {
+                setTimeout(() => Components.onboardingOverlay(), 100);
+            }
         }
     },
 };

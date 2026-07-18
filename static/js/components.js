@@ -162,6 +162,113 @@ const Components = {
         };
         return btn;
     },
+
+    guestNotification() {
+        const div = document.createElement('div');
+        div.style.cssText = 'margin:0 16px 12px;padding:8px 14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);border-radius:var(--radius-sm);display:flex;align-items:center;gap:8px;font-size:13px;';
+        div.innerHTML = `
+            <span style="flex-shrink:0;">👤</span>
+            <span style="flex:1;color:var(--text-secondary);">Browsing as guest — <a id="guest-signup-link" style="color:var(--accent);cursor:pointer;text-decoration:underline;">sign up</a> to save progress</span>
+            <button id="dismiss-guest" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0 4px;">✕</button>
+        `;
+        div.querySelector('#guest-signup-link').onclick = (e) => {
+            e.preventDefault();
+            App.navigate('register');
+        };
+        div.querySelector('#dismiss-guest').onclick = () => div.remove();
+        return div;
+    },
+
+    onboardingOverlay() {
+        if (document.getElementById('onboarding-overlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'onboarding-overlay';
+        overlay.style.cssText = `
+            position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;
+            background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;
+            padding:24px;animation:fadeIn 0.3s ease;
+        `;
+
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background:var(--bg-primary);border-radius:var(--radius);
+            padding:32px 28px;max-width:380px;width:100%;
+            border:1px solid var(--border);box-shadow:0 12px 40px rgba(0,0,0,0.3);
+        `;
+        card.innerHTML = `
+            <div style="text-align:center;margin-bottom:24px;">
+                <div style="font-size:32px;margin-bottom:8px;">👋</div>
+                <h2 style="font-size:20px;margin:0 0 4px;">Welcome to LearnApp</h2>
+                <p style="font-size:13px;color:var(--text-secondary);margin:0;">Tell us a bit about yourself</p>
+            </div>
+            <div class="form-group">
+                <label>Your Name</label>
+                <input class="form-input" id="onb-name" placeholder="Enter your name" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label>Your Age</label>
+                <input class="form-input" id="onb-age" type="number" min="1" max="150" placeholder="Enter your age">
+            </div>
+            <div class="form-group">
+                <label>What do you want to learn?</label>
+                <select class="form-input" id="onb-goal">
+                    <option value="">Select a goal...</option>
+                    <option value="learn">Learn programming from scratch</option>
+                    <option value="job">Get a developer job</option>
+                    <option value="ai">Build AI tools and models</option>
+                    <option value="automate">Automate repetitive tasks</option>
+                    <option value="web">Create websites and web apps</option>
+                    <option value="apps">Build desktop/mobile apps</option>
+                </select>
+            </div>
+            <div id="onb-error" style="color:var(--error);font-size:12px;margin-bottom:8px;text-align:center;"></div>
+            <button class="btn btn-primary" id="onb-submit" style="width:100%;">Get Started</button>
+        `;
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        document.getElementById('onb-name').focus();
+
+        const close = () => {
+            overlay.remove();
+            // Re-check if they dismissed without completing
+        };
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+
+        document.getElementById('onb-submit').onclick = () => {
+            const name = document.getElementById('onb-name').value.trim();
+            const age = document.getElementById('onb-age').value.trim();
+            const goal = document.getElementById('onb-goal').value;
+            const err = document.getElementById('onb-error');
+            if (!name) { err.textContent = 'Please enter your name.'; return; }
+            if (!age) { err.textContent = 'Please enter your age.'; return; }
+            if (!goal) { err.textContent = 'Please select a learning goal.'; return; }
+
+            const profile = { name, age, goal };
+            Auth.saveGuestProfile(profile);
+            Auth.user.name = name;
+            Auth.user.age = age;
+            Auth.user.goal = goal;
+            Auth.user.onboarding_complete = true;
+
+            overlay.remove();
+
+            // Re-render dashboard to show courses
+            if (App.currentPage === 'dashboard') {
+                const app = document.getElementById('app');
+                app.innerHTML = '';
+                Pages.dashboard();
+            }
+        };
+
+        document.getElementById('onb-age').onkeydown = (e) => {
+            if (e.key === 'Enter') document.getElementById('onb-submit').click();
+        };
+    },
 };
 
 let chatHistory = [];
