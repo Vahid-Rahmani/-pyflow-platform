@@ -63,6 +63,7 @@ const App = {
             case 'quiz': await Pages.quizDetail(parseInt(id)); break;
             case 'leaderboard': await Pages.leaderboard(); break;
             case 'profile': await Pages.profile(); break;
+            case 'settings': await Pages.settings(); break;
             case 'pricing': await Pages.pricing(); break;
             case 'projects':
                 if (!id) { await Pages.projects(); break; }

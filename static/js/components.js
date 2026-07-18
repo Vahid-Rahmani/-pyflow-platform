@@ -2,7 +2,8 @@ const Components = {
     nav(items, active) {
         const nav = document.createElement('nav');
         nav.className = 'nav';
-        items.forEach(item => {
+        const allItems = [...items, { id: 'settings', icon: '⚙️', label: 'Settings' }];
+        allItems.forEach(item => {
             const btn = document.createElement('button');
             btn.className = `nav-item${item.id === active ? ' active' : ''}`;
             btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.label}</span>`;
@@ -35,8 +36,8 @@ const Components = {
             <div class="desc">${course.short_description || ''}</div>
             <div class="meta">
                 ${badge}
-                <span>${course.module_count || 0} modules</span>
-                <span>${course.lesson_count || 0} lessons</span>
+                <span>${course.module_count || 6} modules</span>
+                <span>${course.lesson_count || 30} lessons</span>
             </div>
         `;
         div.onclick = () => App.navigate(`course/${course.slug}`);
@@ -57,6 +58,69 @@ const Components = {
         `;
         div.onclick = () => App.navigate(`lesson/${lesson.id}`);
         return div;
+    },
+
+    moduleCard(mod, courseSlug, progress) {
+        const section = document.createElement('div');
+        section.className = 'module-section';
+        const completedLessons = (progress.lessons || []).filter(id => Math.floor(id / 100) === mod.id).length;
+        const totalLessons = mod.lessons.length;
+        const quizDone = (progress.quizzes || []).includes(mod.quiz.id);
+        section.innerHTML = `
+            <div class="module-header">
+                <div style="flex:1;">
+                    <h3 style="margin:0 0 2px;font-size:15px;">${mod.title}</h3>
+                    <div style="font-size:12px;color:var(--text-secondary);">${mod.description || ''}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${completedLessons}/${totalLessons} lessons · ${quizDone ? '✅ Quiz done' : '❓ Quiz'}</div>
+                </div>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="module-content" style="display:none;">
+                <div class="lesson-list">
+                    ${mod.lessons.map(l => {
+                        const done = (progress.lessons || []).includes(l.id);
+                        return `
+                            <div class="lesson-item" data-lesson-id="${l.id}" data-course="${courseSlug}" data-module="${mod.id}">
+                                <div class="icon">📖</div>
+                                <div class="info">
+                                    <div class="title">${l.title}</div>
+                                    <div class="xp">+${l.xp_reward} XP</div>
+                                </div>
+                                <div class="status ${done ? 'completed' : ''}">${done ? '✅' : '⭕'}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                    <div class="lesson-item quiz-item" data-quiz-id="${mod.quiz.id}" data-course="${courseSlug}" data-module="${mod.id}" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
+                        <div class="icon">❓</div>
+                        <div class="info">
+                            <div class="title">📝 ${mod.quiz.title}</div>
+                            <div class="xp">+${mod.quiz.xp_reward} XP</div>
+                        </div>
+                        <div class="status ${quizDone ? 'completed' : ''}">${quizDone ? '✅' : '📝'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        const header = section.querySelector('.module-header');
+        const content = section.querySelector('.module-content');
+        header.onclick = () => {
+            const open = content.style.display !== 'none';
+            content.style.display = open ? 'none' : 'block';
+            header.querySelector('.arrow').classList.toggle('open', !open);
+        };
+        setTimeout(() => {
+            section.querySelectorAll('.lesson-item').forEach(el => {
+                el.onclick = (e) => {
+                    e.stopPropagation();
+                    NavContext.set(courseSlug, mod.id);
+                    const lessonId = el.dataset.lessonId;
+                    if (lessonId) App.navigate(`lesson/${lessonId}`);
+                    const quizId = el.dataset.quizId;
+                    if (quizId) App.navigate(`quiz/${quizId}`);
+                };
+            });
+        }, 0);
+        return section;
     },
 
     projectCard(project) {
@@ -230,10 +294,7 @@ const Components = {
 
         document.getElementById('onb-name').focus();
 
-        const close = () => {
-            overlay.remove();
-            // Re-check if they dismissed without completing
-        };
+        const close = () => { overlay.remove(); };
 
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) close();
@@ -257,7 +318,6 @@ const Components = {
 
             overlay.remove();
 
-            // Re-render dashboard to show courses
             if (App.currentPage === 'dashboard') {
                 const app = document.getElementById('app');
                 app.innerHTML = '';
@@ -349,7 +409,6 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Monaco Editor integration
 window.monacoEditors = {};
 window.monacoReady = false;
 
@@ -421,4 +480,12 @@ window.getEditorId = function(container) {
     if (!container) return null;
     const section = container.closest('.editor-section');
     return section ? section.dataset.editorId : null;
+};
+
+const NavContext = {
+    _courseSlug: null,
+    _moduleIndex: null,
+    set(slug, modIndex) { this._courseSlug = slug; this._moduleIndex = modIndex; },
+    get() { return { courseSlug: this._courseSlug, moduleIndex: this._moduleIndex }; },
+    clear() { this._courseSlug = null; this._moduleIndex = null; },
 };

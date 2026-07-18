@@ -1,9 +1,177 @@
 const FALLBACK_COURSES = [
-    { title: 'Python Basics', slug: 'python-basics', short_description: 'Start here! Learn variables, loops, and functions.', difficulty: 'beginner', module_count: 4, lesson_count: 12 },
-    { title: 'Data Structures', slug: 'data-structures', short_description: 'Lists, dictionaries, sets, and tuples.', difficulty: 'beginner', module_count: 3, lesson_count: 10 },
-    { title: 'Web Scraping', slug: 'web-scraping', short_description: 'Extract data from websites with Python.', difficulty: 'intermediate', module_count: 3, lesson_count: 9 },
-    { title: 'APIs & Automation', slug: 'apis-automation', short_description: 'Build APIs and automate workflows.', difficulty: 'intermediate', module_count: 4, lesson_count: 14 },
+    { title: 'Python Basics', slug: 'python-basics', short_description: 'Start here! Learn variables, loops, and functions.', difficulty: 'beginner', module_count: 6, lesson_count: 30 },
+    { title: 'Data Structures', slug: 'data-structures', short_description: 'Lists, dictionaries, sets, and tuples.', difficulty: 'beginner', module_count: 6, lesson_count: 30 },
+    { title: 'Web Scraping', slug: 'web-scraping', short_description: 'Extract data from websites with Python.', difficulty: 'intermediate', module_count: 6, lesson_count: 30 },
+    { title: 'APIs & Automation', slug: 'apis-automation', short_description: 'Build APIs and automate workflows.', difficulty: 'intermediate', module_count: 6, lesson_count: 30 },
 ];
+
+const COURSE_STRUCTURE = {
+    'python-basics': {
+        modules: [
+            { title: 'Welcome to Python', desc: 'Get started with Python — install it, write your first program, and explore the REPL.' },
+            { title: 'Variables & Data Types', desc: 'Understand variables, numbers, strings, and booleans.' },
+            { title: 'Control Flow', desc: 'Master if/else, loops, and logical operators.' },
+            { title: 'Functions & Scope', desc: 'Write reusable code with functions, parameters, and return values.' },
+            { title: 'Lists & Dictionaries', desc: 'Store and manipulate collections of data.' },
+            { title: 'Modules & File I/O', desc: 'Import modules, read/write files, and build real programs.' },
+        ],
+    },
+    'data-structures': {
+        modules: [
+            { title: 'Lists & List Operations', desc: 'Create, slice, and manipulate lists.' },
+            { title: 'Tuples & Sequences', desc: 'Immutable sequences and when to use them.' },
+            { title: 'Dictionaries & Mapping', desc: 'Key-value stores and dictionary methods.' },
+            { title: 'Sets & Set Operations', desc: 'Unique collections and mathematical set ops.' },
+            { title: 'Strings & Bytes', desc: 'String manipulation, formatting, and byte handling.' },
+            { title: 'Advanced Data Structures', desc: 'Collections module, defaultdict, Counter, and more.' },
+        ],
+    },
+    'web-scraping': {
+        modules: [
+            { title: 'HTTP & The Web', desc: 'Understand requests, responses, and the HTTP protocol.' },
+            { title: 'HTML Parsing', desc: 'Parse HTML with BeautifulSoup and extract data.' },
+            { title: 'Advanced Scraping', desc: 'Handle forms, sessions, and pagination.' },
+            { title: 'Dynamic Content', desc: 'Scrape JavaScript-rendered pages with Selenium.' },
+            { title: 'Data Processing', desc: 'Clean, transform, and store scraped data.' },
+            { title: 'Scraping at Scale', desc: 'Rate limiting, proxies, and ethical scraping.' },
+        ],
+    },
+    'apis-automation': {
+        modules: [
+            { title: 'REST API Fundamentals', desc: 'Understand REST principles and API design.' },
+            { title: 'Authentication & Security', desc: 'API keys, OAuth, and secure endpoints.' },
+            { title: 'Building API Clients', desc: 'Write Python clients to consume APIs.' },
+            { title: 'Automation Patterns', desc: 'Script repetitive tasks and workflows.' },
+            { title: 'Scheduling & Monitoring', desc: 'Schedule tasks and monitor their execution.' },
+            { title: 'Production Deployment', desc: 'Deploy APIs and automation to the cloud.' },
+        ],
+    },
+};
+
+const LESSON_TOPICS = [
+    'Introduction & Setup',
+    'Core Concepts',
+    'Working with Data',
+    'Advanced Techniques',
+    'Practice & Review',
+];
+
+function generateLessonContent(moduleTitle, lessonNum, courseSlug) {
+    const topics = {
+        1: `## ${moduleTitle} — Introduction\n\nWelcome to **${moduleTitle}**! In this lesson, you'll learn the foundational concepts.\n\n### What you'll learn:\n- Key terminology and concepts\n- Setting up your environment\n- First practical example\n\n### Example\n\`\`\`python\n# Getting started\nprint("Welcome to ${moduleTitle}!")\n\`\`\`\n\n### Try it yourself\nOpen the code editor and experiment with the examples above.`,
+        2: `## ${moduleTitle} — Core Concepts\n\nNow let's dive deeper into the core ideas behind **${moduleTitle}**.\n\n### Key Points\n- Understanding the underlying principles\n- Common patterns and best practices\n- How it fits into the bigger picture\n\n### Example\n\`\`\`python\n# Core concepts in action\nresult = 42\nprint(f"The answer is {result}")\n\`\`\`\n\nComplete the exercises to reinforce your understanding.`,
+        3: `## ${moduleTitle} — Working with Data\n\nLearn how to work with real data using the techniques from **${moduleTitle}**.\n\n### Data Handling\n- Reading and preparing data\n- Transforming inputs into outputs\n- Handling edge cases\n\n### Example\n\`\`\`python\n# Data processing example\ndata = [1, 2, 3, 4, 5]\nprocessed = [x * 2 for x in data]\nprint(processed)\n\`\`\`\n\nPractice with different data sets to build confidence.`,
+        4: `## ${moduleTitle} — Advanced Techniques\n\nLevel up your skills with advanced techniques in **${moduleTitle}**.\n\n### Advanced Topics\n- Optimization strategies\n- Real-world patterns\n- Common pitfalls and how to avoid them\n\n### Example\n\`\`\`python\n# Advanced pattern\ndef process_items(items):\n    return [transform(item) for item in items if condition(item)]\n\n# Test it\nresult = process_items([1, 2, 3, 4, 5])\n\`\`\`\n\nMaster these concepts to write production-quality code.`,
+        5: `## ${moduleTitle} — Practice & Review\n\nPut everything together with a comprehensive review of **${moduleTitle}**.\n\n### Review Questions\n1. What are the key concepts covered?\n2. How do the pieces fit together?\n3. Can you build a complete solution?\n\n### Challenge\n\`\`\`python\n# Final challenge: build a complete solution\ndef solve(input_data):\n    # Your implementation here\n    pass\n\n# Test your solution\ntest_data = "example"\nprint(solve(test_data))\n\`\`\`\n\n### Summary\nAfter completing this module, you should be comfortable with all aspects of ${moduleTitle}. Move on to the next module when you're ready!`,
+    };
+    return topics[lessonNum] || topics[1];
+}
+
+function generateQuizQuestions(moduleTitle, moduleId) {
+    const questions = [
+        {
+            id: moduleId * 100 + 1,
+            question_text: `Which of the following best describes a core concept of "${moduleTitle}"?`,
+            answers: [
+                { id: moduleId * 1000 + 1, answer_text: `The fundamental principle of ${moduleTitle.toLowerCase()}`, is_correct: true },
+                { id: moduleId * 1000 + 2, answer_text: 'An unrelated programming concept', is_correct: false },
+                { id: moduleId * 1000 + 3, answer_text: 'A database management technique', is_correct: false },
+            ],
+        },
+        {
+            id: moduleId * 100 + 2,
+            question_text: `What is the most common use case for ${moduleTitle} in Python?`,
+            answers: [
+                { id: moduleId * 1000 + 4, answer_text: 'Data manipulation and automation', is_correct: false },
+                { id: moduleId * 1000 + 5, answer_text: `Applying ${moduleTitle.toLowerCase()} concepts to solve problems`, is_correct: true },
+                { id: moduleId * 1000 + 6, answer_text: 'Hardware driver development', is_correct: false },
+            ],
+        },
+        {
+            id: moduleId * 100 + 3,
+            question_text: `When working with ${moduleTitle}, which practice is most important?`,
+            answers: [
+                { id: moduleId * 1000 + 7, answer_text: 'Writing clean, readable code with proper error handling', is_correct: true },
+                { id: moduleId * 1000 + 8, answer_text: 'Using as many libraries as possible', is_correct: false },
+                { id: moduleId * 1000 + 9, answer_text: 'Avoiding comments in your code', is_correct: false },
+            ],
+        },
+    ];
+    return questions;
+}
+
+function getOrBuildMockCourse(slug) {
+    if (window.__mockCourses && window.__mockCourses[slug]) return window.__mockCourses[slug];
+    const structure = COURSE_STRUCTURE[slug];
+    const base = FALLBACK_COURSES.find(c => c.slug === slug);
+    if (!structure || !base) return null;
+    if (!window.__mockCourses) window.__mockCourses = {};
+    const course = { ...base };
+    course.modules = structure.modules.map((mod, mi) => {
+        const moduleId = mi + 1;
+        const lessons = [];
+        for (let li = 1; li <= 5; li++) {
+            const lessonId = moduleId * 100 + li;
+            lessons.push({
+                id: lessonId,
+                title: `${mod.title} — ${LESSON_TOPICS[li - 1]}`,
+                lesson_type: 'text',
+                xp_reward: 10,
+                content: generateLessonContent(mod.title, li, slug),
+            });
+        }
+        const quizId = moduleId * 100 + 10;
+        const quiz = {
+            id: quizId,
+            title: `${mod.title} Quiz`,
+            xp_reward: 25,
+            questions: generateQuizQuestions(mod.title, moduleId),
+        };
+        return { id: moduleId, title: mod.title, description: mod.desc, lessons, quiz };
+    });
+    course.module_count = 6;
+    course.lesson_count = 30;
+    window.__mockCourses[slug] = course;
+    return course;
+}
+
+function findMockLesson(courseSlug, lessonId) {
+    const course = getOrBuildMockCourse(courseSlug);
+    if (!course) return null;
+    for (const mod of course.modules) {
+        const lesson = mod.lessons.find(l => l.id == lessonId);
+        if (lesson) return { lesson, module: mod, course };
+    }
+    return null;
+}
+
+function findMockQuiz(courseSlug, quizId) {
+    const course = getOrBuildMockCourse(courseSlug);
+    if (!course) return null;
+    for (const mod of course.modules) {
+        if (mod.quiz.id == quizId) return { quiz: mod.quiz, module: mod, course };
+    }
+    return null;
+}
+
+function getAllMockCourses() {
+    return FALLBACK_COURSES.map(c => getOrBuildMockCourse(c.slug)).filter(Boolean);
+}
+
+function getGuestProgress(slug) {
+    try {
+        const all = JSON.parse(localStorage.getItem('learnapp_progress') || '{}');
+        return all[slug] || { lessons: [], quizzes: [] };
+    } catch { return { lessons: [], quizzes: [] }; }
+}
+
+function markGuestProgress(slug, type, id) {
+    const all = JSON.parse(localStorage.getItem('learnapp_progress') || '{}');
+    if (!all[slug]) all[slug] = { lessons: [], quizzes: [] };
+    if (type === 'lesson' && !all[slug].lessons.includes(id)) all[slug].lessons.push(id);
+    if (type === 'quiz' && !all[slug].quizzes.includes(id)) all[slug].quizzes.push(id);
+    localStorage.setItem('learnapp_progress', JSON.stringify(all));
+}
 
 const Pages = {
     async dashboard() {
@@ -12,25 +180,16 @@ const Pages = {
 
         app.appendChild(Components.pageHeader('LearnApp', 'Learn Python interactively'));
 
-        // Show small closable guest notification instead of big banner
         if (Auth.isGuest()) {
             app.appendChild(Components.guestNotification());
         }
 
-        if (Auth.user && Auth.isGuest()) {
-            const profile = Auth.loadGuestProfile();
-            if (profile.name) {
-                app.appendChild(Components.statCards([
-                    { value: '0 XP', label: 'XP' },
-                    { value: 'Level 1', label: 'Level' },
-                    { value: '0', label: 'Day Streak' },
-                ]));
-            }
-        } else if (Auth.user) {
+        if (Auth.user) {
+            const isGuest = Auth.isGuest();
             app.appendChild(Components.statCards([
-                { value: Auth.user.xp, label: 'XP' },
-                { value: Auth.user.level, label: 'Level' },
-                { value: Auth.user.streak_count || 0, label: 'Day Streak' },
+                { value: isGuest ? '0 XP' : Auth.user.xp, label: 'XP' },
+                { value: isGuest ? 'Level 1' : Auth.user.level, label: 'Level' },
+                { value: isGuest ? '0' : (Auth.user.streak_count || 0), label: 'Day Streak' },
             ]));
         }
 
@@ -58,8 +217,7 @@ const Pages = {
         if (ok && data.results && data.results.length > 0) {
             data.results.forEach(c => container.appendChild(Components.courseCard(c)));
         } else {
-            // Show placeholder courses when API fails or returns empty
-            FALLBACK_COURSES.forEach(c => container.appendChild(Components.courseCard(c)));
+            getAllMockCourses().forEach(c => container.appendChild(Components.courseCard(c)));
         }
 
         app.appendChild(Components.nav([
@@ -72,112 +230,140 @@ const Pages = {
     async courseDetail(slug) {
         const app = document.getElementById('app');
         app.innerHTML = '';
+        app.appendChild(Components.spinner());
+
+        const isGuest = Auth.isGuest();
+        let course = null;
+
         const { ok, data } = await API.get(`/courses/${slug}/`);
-        if (!ok) { app.innerHTML = '<p>Course not found</p>'; return; }
+        if (ok && data && data.modules) {
+            course = data;
+        } else {
+            const mock = getOrBuildMockCourse(slug);
+            if (mock) course = mock;
+        }
+
+        app.innerHTML = '';
+        if (!course) {
+            app.innerHTML = '<p style="padding:20px;">Course not found. <a style="color:var(--accent);cursor:pointer;" onclick="App.navigate(\'dashboard\')">Back to dashboard</a></p>';
+            return;
+        }
+
+        const progress = isGuest ? getGuestProgress(slug) : { lessons: [], quizzes: [] };
+
         app.appendChild(Components.backButton());
+
         const header = document.createElement('div');
         header.className = 'page-header';
-        header.innerHTML = `<h1>${data.title}</h1><p style="color:var(--text-secondary);font-size:13px;">${data.description}</p>`;
+        header.innerHTML = `<h1>${course.title}</h1><p style="color:var(--text-secondary);font-size:13px;">${course.short_description || course.description || ''}</p>`;
         app.appendChild(header);
-        let progressData = { completed_items: 0, total_items: 0, progress_pct: 0 };
-        if (API.isAuthenticated()) {
-            const pRes = await API.get(`/courses/progress/${slug}/`);
-            if (pRes.ok) progressData = pRes.data;
-        }
-        app.appendChild(Components.statCards([
-            { value: `${progressData.progress_pct}%`, label: 'Complete' },
-            { value: progressData.completed_items, label: 'Done' },
-            { value: progressData.total_items, label: 'Total' },
-        ]));
-        const completedSet = new Set();
-        if (API.isAuthenticated()) {
-            const pAll = await API.get('/courses/progress/');
-            if (pAll.ok && pAll.data) {
-                pAll.data.completed_lessons?.forEach(id => completedSet.add(`lesson-${id}`));
-                pAll.data.completed_challenges?.forEach(id => completedSet.add(`challenge-${id}`));
-                pAll.data.completed_quizzes?.forEach(id => completedSet.add(`quiz-${id}`));
-            }
-        }
-        (data.modules || []).forEach(mod => {
-            const section = document.createElement('div');
-            section.className = 'module-section';
-            section.innerHTML = `
-                <div class="module-header">
-                    <h3>${mod.title}</h3>
-                    <span class="arrow">▼</span>
-                </div>
-                <div class="module-content" style="display:none;">
-                    ${mod.description ? `<p style="color:var(--text-secondary);font-size:12px;margin-bottom:8px;">${mod.description}</p>` : ''}
-                    <div class="lesson-list"></div>
-                </div>
-            `;
-            const header_el = section.querySelector('.module-header');
-            const content = section.querySelector('.module-content');
-            header_el.onclick = () => {
-                const open = content.style.display !== 'none';
-                content.style.display = open ? 'none' : 'block';
-                header_el.querySelector('.arrow').classList.toggle('open', !open);
-            };
-            if (mod === data.modules[0]) {
-                content.style.display = 'block';
-                header_el.querySelector('.arrow').classList.add('open');
-            }
-            const list = section.querySelector('.lesson-list');
-            if (mod.lessons) mod.lessons.forEach(l => {
-                list.appendChild(Components.lessonItem(l, completedSet.has(`lesson-${l.id}`)));
-            });
-            if (mod.challenges) mod.challenges.forEach(c => {
-                list.appendChild(Components.lessonItem({
-                    id: c.id,
-                    title: c.title,
-                    lesson_type: 'code',
-                    xp_reward: c.xp_reward,
-                }, completedSet.has(`challenge-${c.id}`)));
-            });
-            if (mod.quizzes) mod.quizzes.forEach(q => {
-                list.appendChild(Components.lessonItem({
-                    id: q.id,
-                    title: q.title,
-                    lesson_type: 'quiz',
-                    xp_reward: q.xp_reward,
-                }, completedSet.has(`quiz-${q.id}`)));
-            });
-            app.appendChild(section);
+
+        const stats = document.createElement('div');
+        stats.className = 'stats-bar';
+        const totalLessons = course.modules.reduce((s, m) => s + m.lessons.length, 0);
+        const totalQuizzes = course.modules.filter(m => m.quiz).length;
+        const doneLessons = (progress.lessons || []).length;
+        const doneQuizzes = (progress.quizzes || []).length;
+        stats.innerHTML = `
+            <div class="stat-card"><div class="value">${doneLessons}/${totalLessons}</div><div class="label">Lessons</div></div>
+            <div class="stat-card"><div class="value">${doneQuizzes}/${totalQuizzes}</div><div class="label">Quizzes</div></div>
+            <div class="stat-card"><div class="value">${course.modules.length}</div><div class="label">Modules</div></div>
+        `;
+        app.appendChild(stats);
+
+        const modTitle = document.createElement('div');
+        modTitle.style.cssText = 'padding:16px 16px 4px;font-size:14px;font-weight:600;color:var(--text-secondary);';
+        modTitle.textContent = '📋 Course Modules';
+        app.appendChild(modTitle);
+
+        course.modules.forEach(mod => {
+            app.appendChild(Components.moduleCard(mod, slug, progress));
         });
+
         app.appendChild(Components.nav([
             { id: 'dashboard', icon: '🏠', label: 'Home' },
             { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
             { id: 'profile', icon: '👤', label: 'Profile' },
         ], 'dashboard'));
-        app.appendChild(Components.chatToggle());
+
+        if (!isGuest) app.appendChild(Components.chatToggle());
     },
 
     async lessonDetail(lessonId) {
         const app = document.getElementById('app');
         app.innerHTML = '';
         app.appendChild(Components.spinner());
-        const coursesRes = await API.get('/courses/');
+
+        const isGuest = Auth.isGuest();
+        const ctx = NavContext.get();
         let lesson = null;
-        let courseSlug = '';
-        if (coursesRes.ok) {
-            for (const c of (coursesRes.data.results || [])) {
-                const modRes = await API.get(`/courses/${c.slug}/`);
-                if (modRes.ok && modRes.data.modules) {
-                    for (const mod of modRes.data.modules) {
-                        for (const l of (mod.lessons || [])) {
-                            if (l.id == lessonId) { lesson = l; courseSlug = c.slug; break; }
-                        }
-                        if (lesson) break;
-                    }
+        let courseSlug = ctx.courseSlug;
+        let course = null;
+        let mod = null;
+        let lessonIndex = -1;
+
+        if (courseSlug) {
+            const mock = getOrBuildMockCourse(courseSlug);
+            if (mock) {
+                for (const m of mock.modules) {
+                    const idx = m.lessons.findIndex(l => l.id == lessonId);
+                    if (idx !== -1) { lesson = m.lessons[idx]; mod = m; course = mock; lessonIndex = idx; break; }
                 }
-                if (lesson) break;
             }
         }
+
+        if (!lesson) {
+            const coursesRes = await API.get('/courses/');
+            if (coursesRes.ok) {
+                for (const c of (coursesRes.data.results || [])) {
+                    const modRes = await API.get(`/courses/${c.slug}/`);
+                    if (modRes.ok && modRes.data.modules) {
+                        for (const m of modRes.data.modules) {
+                            for (const l of (m.lessons || [])) {
+                                if (l.id == lessonId) { lesson = l; course = modRes.data; mod = m; courseSlug = c.slug; break; }
+                            }
+                            if (lesson) break;
+                        }
+                    }
+                    if (lesson) break;
+                }
+            }
+        }
+
+        if (!lesson && !courseSlug) {
+            for (const fc of FALLBACK_COURSES) {
+                const mock = getOrBuildMockCourse(fc.slug);
+                if (mock) {
+                    for (const m of mock.modules) {
+                        const idx = m.lessons.findIndex(l => l.id == lessonId);
+                        if (idx !== -1) { lesson = m.lessons[idx]; mod = m; course = mock; courseSlug = fc.slug; lessonIndex = idx; break; }
+                    }
+                    if (lesson) break;
+                }
+            }
+        }
+
         app.innerHTML = '';
         if (!lesson) { app.innerHTML = '<p style="padding:20px;">Lesson not found</p>'; return; }
+
+        const progress = isGuest && courseSlug ? getGuestProgress(courseSlug) : { lessons: [], quizzes: [] };
+        const completed = (progress.lessons || []).includes(lesson.id);
+
         app.appendChild(Components.backButton());
         const header = Components.pageHeader(lesson.title, `+${lesson.xp_reward} XP`);
         app.appendChild(header);
+
+        if (mod) {
+            const progressInfo = document.createElement('div');
+            progressInfo.style.cssText = 'padding:0 16px 8px;font-size:12px;color:var(--text-secondary);display:flex;align-items:center;justify-content:space-between;';
+            const count = (progress.lessons || []).filter(id => Math.floor(id / 100) === mod.id).length;
+            progressInfo.innerHTML = `
+                <span>📂 ${mod.title} — Lesson ${lessonIndex + 1} of ${mod.lessons.length}</span>
+                <span style="color:var(--text-muted);">${count}/${mod.lessons.length} completed</span>
+            `;
+            app.appendChild(progressInfo);
+        }
+
         const content = document.createElement('div');
         content.className = 'content-page';
         content.innerHTML = lesson.content;
@@ -185,7 +371,24 @@ const Pages = {
 
         const btnGrp = document.createElement('div');
         btnGrp.className = 'btn-group';
-        btnGrp.innerHTML = '<button class="btn btn-primary" id="complete-lesson">Mark Complete</button>';
+
+        let prevLesson = null;
+        let nextLesson = null;
+        if (mod) {
+            if (lessonIndex > 0) prevLesson = mod.lessons[lessonIndex - 1];
+            if (lessonIndex < mod.lessons.length - 1) nextLesson = mod.lessons[lessonIndex + 1];
+        }
+
+        let navHtml = '<div style="display:flex;gap:8px;width:100%;">';
+        if (prevLesson) {
+            navHtml += `<button class="btn btn-sm btn-secondary" id="prev-lesson" style="flex:1;">← ${prevLesson.title}</button>`;
+        }
+        navHtml += `<button class="btn btn-primary" id="complete-lesson" style="flex:1;">${completed ? '✅ Completed' : 'Mark Complete'}</button>`;
+        if (nextLesson) {
+            navHtml += `<button class="btn btn-sm btn-secondary" id="next-lesson" style="flex:1;">${nextLesson.title} →</button>`;
+        }
+        navHtml += '</div>';
+        btnGrp.innerHTML = navHtml;
         app.appendChild(btnGrp);
 
         app.appendChild(Components.nav([
@@ -195,12 +398,34 @@ const Pages = {
         ], 'dashboard'));
 
         document.getElementById('complete-lesson').onclick = async () => {
-            const { ok, data } = await API.post(`/courses/${courseSlug}/lessons/${lesson.slug}/complete/`);
-            if (ok) {
-                const overlay = Components.resultOverlay(data, '');
-                document.body.appendChild(overlay);
+            if (completed) return;
+            if (isGuest && courseSlug) {
+                markGuestProgress(courseSlug, 'lesson', lesson.id);
+                document.getElementById('complete-lesson').textContent = '✅ Completed';
+                return;
+            }
+            if (courseSlug && lesson) {
+                const { ok, data } = await API.post(`/courses/${courseSlug}/lessons/${lesson.slug || lesson.id}/complete/`);
+                if (ok) {
+                    const overlay = Components.resultOverlay(data, '');
+                    document.body.appendChild(overlay);
+                    document.getElementById('complete-lesson').textContent = '✅ Completed';
+                }
             }
         };
+
+        if (prevLesson) {
+            document.getElementById('prev-lesson').onclick = () => {
+                NavContext.set(courseSlug, mod.id);
+                App.navigate(`lesson/${prevLesson.id}`);
+            };
+        }
+        if (nextLesson) {
+            document.getElementById('next-lesson').onclick = () => {
+                NavContext.set(courseSlug, mod.id);
+                App.navigate(`lesson/${nextLesson.id}`);
+            };
+        }
     },
 
     async challengeDetail(challengeId) {
@@ -277,39 +502,76 @@ const Pages = {
     async quizDetail(quizId) {
         const app = document.getElementById('app');
         app.innerHTML = '';
-        const coursesRes = await API.get('/courses/');
+        app.appendChild(Components.spinner());
+
+        const isGuest = Auth.isGuest();
+        const ctx = NavContext.get();
         let quiz = null;
-        let courseSlug = '';
-        if (coursesRes.ok) {
-            for (const c of (coursesRes.data.results || [])) {
-                const qRes = await API.get(`/courses/${c.slug}/quizzes/`);
-                if (qRes.ok) {
-                    for (const q of (qRes.data || [])) {
-                        if (q.id == quizId) { quiz = q; courseSlug = c.slug; break; }
+        let courseSlug = ctx.courseSlug;
+        let course = null;
+        let mod = null;
+
+        if (courseSlug) {
+            const found = findMockQuiz(courseSlug, quizId);
+            if (found) { quiz = found.quiz; mod = found.module; course = found.course; }
+        }
+
+        if (!quiz) {
+            const coursesRes = await API.get('/courses/');
+            if (coursesRes.ok) {
+                for (const c of (coursesRes.data.results || [])) {
+                    const qRes = await API.get(`/courses/${c.slug}/quizzes/`);
+                    if (qRes.ok) {
+                        for (const q of (qRes.data || [])) {
+                            if (q.id == quizId) { quiz = q; courseSlug = c.slug; break; }
+                        }
                     }
+                    if (quiz) break;
                 }
-                if (quiz) break;
             }
         }
+
+        if (!quiz && !courseSlug) {
+            for (const fc of FALLBACK_COURSES) {
+                const found = findMockQuiz(fc.slug, quizId);
+                if (found) { quiz = found.quiz; mod = found.module; course = found.course; courseSlug = fc.slug; break; }
+            }
+        }
+
         app.innerHTML = '';
         if (!quiz) { app.innerHTML = '<p style="padding:20px;">Quiz not found</p>'; return; }
-        app.appendChild(Components.backButton());
-        app.appendChild(Components.pageHeader(quiz.title, `+${quiz.xp_reward} XP`));
+
         const answers = {};
+        const progress = isGuest && courseSlug ? getGuestProgress(courseSlug) : { lessons: [], quizzes: [] };
+        const quizDone = (progress.quizzes || []).includes(quiz.id);
+
+        app.appendChild(Components.backButton());
+        app.appendChild(Components.pageHeader(quiz.title || 'Quiz', `+${quiz.xp_reward || 25} XP`));
+
+        if (mod) {
+            const modInfo = document.createElement('div');
+            modInfo.style.cssText = 'padding:0 16px 8px;font-size:12px;color:var(--text-secondary);';
+            modInfo.textContent = `📂 ${mod.title} — Complete this quiz to finish the module`;
+            app.appendChild(modInfo);
+        }
+
         const form = document.createElement('div');
         form.className = 'content-page';
         const qs = quiz.questions || [];
+        if (qs.length === 0) { form.innerHTML = '<p style="color:var(--text-muted);">No questions in this quiz.</p>'; }
         qs.forEach((q, qi) => {
             const div = document.createElement('div');
             div.className = 'quiz-question';
             div.innerHTML = `<div class="q-text">${qi + 1}. ${q.question_text}</div>`;
-            q.answers.forEach(a => {
+            (q.answers || []).forEach(a => {
                 const opt = document.createElement('div');
                 opt.className = 'quiz-option';
+                if (quizDone && a.is_correct) opt.classList.add('correct');
                 opt.dataset.qid = q.id;
                 opt.dataset.aid = a.id;
                 opt.innerHTML = `<div class="radio"></div><span>${a.answer_text}</span>`;
                 opt.onclick = () => {
+                    if (quizDone) return;
                     const siblings = div.querySelectorAll(`.quiz-option[data-qid="${q.id}"]`);
                     siblings.forEach(s => s.classList.remove('selected'));
                     opt.classList.add('selected');
@@ -320,40 +582,62 @@ const Pages = {
             form.appendChild(div);
         });
         app.appendChild(form);
+
         const btnGrp = document.createElement('div');
         btnGrp.className = 'btn-group';
-        btnGrp.innerHTML = '<button class="btn btn-primary" id="submit-quiz">Submit Quiz</button>';
+        if (quizDone) {
+            btnGrp.innerHTML = '<p style="text-align:center;color:var(--success);font-size:13px;">✅ Quiz completed</p>';
+        } else {
+            btnGrp.innerHTML = '<button class="btn btn-primary" id="submit-quiz">Submit Quiz</button>';
+        }
         app.appendChild(btnGrp);
+
         app.appendChild(Components.nav([
             { id: 'dashboard', icon: '🏠', label: 'Home' },
             { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
             { id: 'profile', icon: '👤', label: 'Profile' },
         ], 'quiz'));
-        document.getElementById('submit-quiz').onclick = async () => {
-            const ansList = Object.entries(answers).map(([qid, aid]) => ({
-                question_id: parseInt(qid),
-                answer_id: parseInt(aid),
-            }));
-            if (ansList.length < qs.length) {
-                alert('Please answer all questions');
-                return;
-            }
-            const { ok, data } = await API.post(`/courses/${courseSlug}/quizzes/${quiz.slug}/submit/`, { answers: ansList });
-            if (ok) {
+
+        if (!quizDone) {
+            document.getElementById('submit-quiz').onclick = async () => {
+                const ansList = Object.entries(answers).map(([qid, aid]) => ({
+                    question_id: parseInt(qid),
+                    answer_id: parseInt(aid),
+                }));
+                if (ansList.length < qs.length) {
+                    alert('Please answer all questions');
+                    return;
+                }
+                let correctCount = 0;
                 qs.forEach(q => {
                     const correctId = q.answers.find(a => a.is_correct)?.id;
+                    const selectedId = answers[q.id];
                     const options = document.querySelectorAll(`.quiz-option[data-qid="${q.id}"]`);
                     options.forEach(o => {
                         if (parseInt(o.dataset.aid) === correctId) o.classList.add('correct');
                         else if (o.classList.contains('selected') && parseInt(o.dataset.aid) !== correctId) o.classList.add('wrong');
                     });
+                    if (selectedId === correctId) correctCount++;
                 });
+
+                if (isGuest && courseSlug) {
+                    markGuestProgress(courseSlug, 'quiz', quiz.id);
+                }
+
+                const passed = correctCount >= Math.ceil(qs.length / 2);
                 setTimeout(() => {
-                    const overlay = Components.resultOverlay(data, '');
+                    const overlay = Components.resultOverlay({
+                        passed,
+                        success: passed,
+                        title: passed ? '🎉 Quiz Passed!' : 'Keep Trying!',
+                        message: `You got ${correctCount}/${qs.length} correct!`,
+                        xp_earned: passed ? (quiz.xp_reward || 25) : 0,
+                        total_xp: 0,
+                    }, '');
                     document.body.appendChild(overlay);
                 }, 1000);
-            }
-        };
+            };
+        }
     },
 
     async projects() {
@@ -642,9 +926,7 @@ const Pages = {
         const btnGrp = document.createElement('div');
         btnGrp.className = 'btn-group';
         btnGrp.style.cssText = 'padding:0 16px;display:flex;flex-direction:column;gap:8px;';
-        btnGrp.innerHTML = `
-            <button class="btn btn-secondary" id="logout-btn">Log Out</button>
-        `;
+        btnGrp.innerHTML = '<button class="btn btn-secondary" id="logout-btn">Log Out</button>';
         app.appendChild(btnGrp);
         app.appendChild(Components.nav([
             { id: 'dashboard', icon: '🏠', label: 'Home' },
@@ -685,12 +967,160 @@ const Pages = {
                 document.getElementById('upgrade-btn').onclick = () => App.navigate('pricing');
             }
         })();
-
         document.getElementById('logout-btn').onclick = () => Auth.logout();
         document.getElementById('lang-select').onchange = async (e) => {
             await API.patch('/auth/me/', { preferred_language: e.target.value });
             Auth.user.preferred_language = e.target.value;
         };
+    },
+
+    async settings() {
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+        app.appendChild(Components.pageHeader('Settings'));
+
+        const isGuest = Auth.isGuest();
+        const profile = Auth.loadGuestProfile();
+
+        const container = document.createElement('div');
+        container.style.cssText = 'padding: 16px; display: flex; flex-direction: column; gap: 20px;';
+
+        // Personal Info Section
+        const infoSection = document.createElement('div');
+        infoSection.style.cssText = 'background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);';
+        infoSection.innerHTML = `
+            <h3 style="margin:0 0 16px;font-size:16px;">👤 Personal Info</h3>
+            <div class="form-group">
+                <label>Name</label>
+                <input class="form-input" id="set-name" value="${profile.name || ''}" ${isGuest ? '' : 'disabled'} placeholder="Your name">
+            </div>
+            <div class="form-group">
+                <label>Age</label>
+                <input class="form-input" id="set-age" type="number" min="1" max="150" value="${profile.age || ''}" ${isGuest ? '' : 'disabled'} placeholder="Your age">
+            </div>
+            <div class="form-group">
+                <label>Learning Goal</label>
+                <select class="form-input" id="set-goal" ${isGuest ? '' : 'disabled'}>
+                    <option value="">Select a goal...</option>
+                    <option value="learn" ${profile.goal === 'learn' ? 'selected' : ''}>Learn programming from scratch</option>
+                    <option value="job" ${profile.goal === 'job' ? 'selected' : ''}>Get a developer job</option>
+                    <option value="ai" ${profile.goal === 'ai' ? 'selected' : ''}>Build AI tools and models</option>
+                    <option value="automate" ${profile.goal === 'automate' ? 'selected' : ''}>Automate repetitive tasks</option>
+                    <option value="web" ${profile.goal === 'web' ? 'selected' : ''}>Create websites and web apps</option>
+                    <option value="apps" ${profile.goal === 'apps' ? 'selected' : ''}>Build desktop/mobile apps</option>
+                </select>
+            </div>
+            ${isGuest ? '<button class="btn btn-primary" id="save-profile-btn" style="width:100%;">Save Profile</button>' : '<p style="font-size:13px;color:var(--text-muted);">Edit your profile in your account settings after signing up.</p>'}
+        `;
+        container.appendChild(infoSection);
+
+        // Preferences Section
+        const prefsSection = document.createElement('div');
+        prefsSection.style.cssText = 'background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);';
+        const savedNotif = localStorage.getItem('notifications_enabled') !== 'false';
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        prefsSection.innerHTML = `
+            <h3 style="margin:0 0 16px;font-size:16px;">⚙️ Preferences</h3>
+            <div class="form-group">
+                <label>Language</label>
+                <select class="form-input" id="set-lang">
+                    <option value="en" ${(Auth.user?.preferred_language || 'en') === 'en' ? 'selected' : ''}>English</option>
+                    <option value="de" ${Auth.user?.preferred_language === 'de' ? 'selected' : ''}>German</option>
+                    <option value="tr" ${Auth.user?.preferred_language === 'tr' ? 'selected' : ''}>Turkish</option>
+                    <option value="ru" ${Auth.user?.preferred_language === 'ru' ? 'selected' : ''}>Russian</option>
+                    <option value="ar" ${Auth.user?.preferred_language === 'ar' ? 'selected' : ''}>Arabic</option>
+                </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;">
+                <label style="margin:0;">Theme</label>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-sm ${savedTheme === 'light' ? 'btn-primary' : 'btn-secondary'}" id="theme-light">☀️ Light</button>
+                    <button class="btn btn-sm ${savedTheme === 'dark' ? 'btn-primary' : 'btn-secondary'}" id="theme-dark">🌙 Dark</button>
+                </div>
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;">
+                <label style="margin:0;">Notifications</label>
+                <label style="position:relative;display:inline-block;width:44px;height:24px;">
+                    <input type="checkbox" id="set-notif" ${savedNotif ? 'checked' : ''} style="opacity:0;width:0;height:0;">
+                    <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${savedNotif ? 'var(--accent)' : 'var(--border)'};border-radius:12px;transition:0.3s;">
+                        <span style="position:absolute;content:'';height:18px;width:18px;border-radius:50%;background:white;top:3px;left:${savedNotif ? '23px' : '3px'};transition:0.3s;"></span>
+                    </span>
+                </label>
+            </div>
+        `;
+        container.appendChild(prefsSection);
+
+        // Account Section (registered users only)
+        if (!isGuest) {
+            const acctSection = document.createElement('div');
+            acctSection.style.cssText = 'background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);';
+            acctSection.innerHTML = `
+                <h3 style="margin:0 0 16px;font-size:16px;">🔒 Account</h3>
+                <button class="btn btn-secondary" id="chg-pw-btn" style="width:100%;margin-bottom:8px;">Change Password</button>
+                <button class="btn btn-secondary" id="settings-logout" style="width:100%;">Log Out</button>
+            `;
+            container.appendChild(acctSection);
+        }
+
+        app.appendChild(container);
+
+        app.appendChild(Components.nav([
+            { id: 'dashboard', icon: '🏠', label: 'Home' },
+            { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
+            { id: 'profile', icon: '👤', label: 'Profile' },
+        ], 'settings'));
+
+        // Event handlers
+        if (isGuest) {
+            document.getElementById('save-profile-btn').onclick = () => {
+                const name = document.getElementById('set-name').value.trim();
+                const age = document.getElementById('set-age').value.trim();
+                const goal = document.getElementById('set-goal').value;
+                if (!name) { alert('Name is required.'); return; }
+                Auth.saveGuestProfile({ name, age, goal });
+                alert('Profile saved!');
+            };
+        }
+
+        document.getElementById('theme-light').onclick = () => {
+            document.body.classList.remove('dark-theme');
+            document.body.classList.add('light-theme');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('theme-light').className = 'btn btn-sm btn-primary';
+            document.getElementById('theme-dark').className = 'btn btn-sm btn-secondary';
+        };
+        document.getElementById('theme-dark').onclick = () => {
+            document.body.classList.remove('light-theme');
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('theme-dark').className = 'btn btn-sm btn-primary';
+            document.getElementById('theme-light').className = 'btn btn-sm btn-secondary';
+        };
+
+        document.getElementById('set-notif').onchange = (e) => {
+            localStorage.setItem('notifications_enabled', e.target.checked);
+        };
+
+        document.getElementById('set-lang').onchange = async (e) => {
+            if (!isGuest) {
+                await API.patch('/auth/me/', { preferred_language: e.target.value });
+                if (Auth.user) Auth.user.preferred_language = e.target.value;
+            } else {
+                localStorage.setItem('preferred_language', e.target.value);
+            }
+        };
+
+        if (!isGuest) {
+            document.getElementById('settings-logout').onclick = () => Auth.logout();
+            document.getElementById('chg-pw-btn').onclick = async () => {
+                const oldPw = prompt('Current password:');
+                if (!oldPw) return;
+                const newPw = prompt('New password (min 8 chars):');
+                if (!newPw || newPw.length < 8) { alert('Password must be at least 8 characters.'); return; }
+                const result = await Auth.changePassword(oldPw, newPw);
+                alert(result.ok ? 'Password changed!' : result.error || 'Error changing password');
+            };
+        }
     },
 
     async pricing() {
