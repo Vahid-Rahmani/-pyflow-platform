@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'courses',
     'sandbox',
     'subscriptions',
+    'deepdive',
 ]
 
 SITE_ID = 1

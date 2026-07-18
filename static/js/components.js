@@ -2,7 +2,7 @@ const Components = {
     nav(items, active) {
         const nav = document.createElement('nav');
         nav.className = 'nav';
-        const allItems = [...items, { id: 'settings', icon: '⚙️', label: 'Settings' }];
+        const allItems = [...items, { id: 'settings', icon: '⚙️', label: I18n.t('nav.settings') }];
         allItems.forEach(item => {
             const btn = document.createElement('button');
             btn.className = `nav-item${item.id === active ? ' active' : ''}`;
@@ -488,4 +488,207 @@ const NavContext = {
     set(slug, modIndex) { this._courseSlug = slug; this._moduleIndex = modIndex; },
     get() { return { courseSlug: this._courseSlug, moduleIndex: this._moduleIndex }; },
     clear() { this._courseSlug = null; this._moduleIndex = null; },
+};
+
+// ─── Practice Terminal ────────────────────────────────────────────────
+Components.practiceTerminal = function(subsectionId) {
+    const uid = 'term-' + (subsectionId || Date.now());
+    const container = document.createElement('div');
+    container.className = 'terminal';
+    container.id = uid + '-container';
+    container.innerHTML = `
+        <div class="terminal-header">
+            <span class="terminal-dot close"></span>
+            <span class="terminal-dot min"></span>
+            <span class="terminal-dot max"></span>
+            <span class="terminal-title">${I18n.t('lesson.terminal')}</span>
+        </div>
+        <div class="terminal-body" id="${uid}-body">
+            <div class="terminal-output">${I18n.locale === 'fa' ? 'به ترمینال تمرین خوش آمدید! کد خود را بنویسید و Enter را بزنید.' : 'Welcome to the Practice Terminal! Write your code and press Enter.'}</div>
+        </div>
+        <div style="padding:4px 12px 8px;border-top:1px solid #222;display:flex;gap:8px;">
+            <div class="terminal-input-line" style="flex:1;">
+                <span class="terminal-prompt">>>> </span>
+                <input class="terminal-input" id="${uid}-input" placeholder="${I18n.t('terminal.placeholder')}" autocomplete="off" spellcheck="false">
+            </div>
+            <button class="btn btn-sm btn-primary" id="${uid}-run" style="width:auto;font-size:11px;padding:4px 10px;">${I18n.t('terminal.run')}</button>
+            <button class="btn btn-sm btn-secondary" id="${uid}-clear" style="width:auto;font-size:11px;padding:4px 10px;">${I18n.t('terminal.clear')}</button>
+        </div>
+    `;
+
+    setTimeout(() => {
+        const input = document.getElementById(`${uid}-input`);
+        const body = document.getElementById(`${uid}-body`);
+        const runBtn = document.getElementById(`${uid}-run`);
+        const clearBtn = document.getElementById(`${uid}-clear`);
+
+        const runCode = async () => {
+            const code = input.value.trim();
+            if (!code) return;
+            const outputDiv = document.createElement('div');
+            outputDiv.className = 'terminal-output';
+            outputDiv.textContent = '⏳ Running...';
+            body.appendChild(outputDiv);
+            body.scrollTop = body.scrollHeight;
+            const { ok, data } = await API.post('/sandbox/execute/', { code });
+            outputDiv.textContent = data.output || data.error || (ok ? '✓ Done' : '✗ Error');
+            outputDiv.className = `terminal-output ${ok ? '' : 'error'}`;
+            body.scrollTop = body.scrollHeight;
+
+            // Golden key: track correct terminal inputs
+            if (ok && subsectionId && Auth.isAuthenticated()) {
+                await API.post(`/deepdive/levels/1/subsections/${subsectionId}/earn-iq/`, {
+                    amount: 5,
+                    description: 'Terminal exercise completed',
+                });
+            }
+            input.value = '';
+            input.focus();
+        };
+
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter') runCode();
+        };
+        runBtn.onclick = runCode;
+        clearBtn.onclick = () => {
+            body.innerHTML = '';
+            const welcome = document.createElement('div');
+            welcome.className = 'terminal-output';
+            welcome.textContent = I18n.locale === 'fa' ? 'ترمینال پاک شد.' : 'Terminal cleared.';
+            body.appendChild(welcome);
+        };
+        input.focus();
+    }, 50);
+
+    return container;
+};
+
+// ─── Golden Key Widget ────────────────────────────────────────────────
+Components.goldenKeyWidget = function(currentIQ, threshold, earned) {
+    const div = document.createElement('div');
+    const pct = Math.min(100, Math.round((currentIQ / threshold) * 100));
+    if (earned) {
+        div.className = 'golden-key-card';
+        div.style.borderColor = 'var(--success)';
+        div.style.background = 'linear-gradient(135deg, #1a2e1a, #1a1a2e)';
+        div.innerHTML = `
+            <div class="golden-key-icon">🏆</div>
+            <div class="golden-key-title" style="color:var(--success);">${I18n.t('golden_key.earned')}</div>
+            <div class="golden-key-desc">${currentIQ} / ${threshold} IQ ${I18n.locale === 'fa' ? 'امتیاز' : 'points'}</div>
+        `;
+    } else {
+        div.className = 'golden-key-card';
+        div.innerHTML = `
+            <div class="golden-key-icon">🔑</div>
+            <div class="golden-key-title">${I18n.t('golden_key.title')}</div>
+            <div class="golden-key-desc">${I18n.t('golden_key.desc')}</div>
+            <div class="iq-bar"><div class="iq-bar-fill" style="width:${pct}%;"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);">
+                <span>${currentIQ} IQ</span>
+                <span>${threshold} IQ</span>
+            </div>
+        `;
+    }
+    return div;
+};
+
+// ─── Markdown Export Button ──────────────────────────────────────────
+Components.markdownExportButton = function(levelNum, subId) {
+    const btn = document.createElement('button');
+    btn.className = 'md-export-btn';
+    btn.innerHTML = `📝 ${I18n.t('lesson.export_md')}`;
+    btn.onclick = () => {
+        window.open(`/api/deepdive/levels/${levelNum}/subsections/${subId}/export-markdown/`, '_blank');
+    };
+    return btn;
+};
+
+// ─── MCQ Question Component ──────────────────────────────────────────
+Components.mcqQuestion = function(q, index, onAnswer) {
+    const div = document.createElement('div');
+    div.className = 'mcq-item';
+    const selectedOpt = { current: null };
+
+    div.innerHTML = `
+        <div class="mcq-question">${index + 1}. ${q.question}</div>
+        <div class="mcq-list" style="gap:4px;">
+            ${q.options.map((o, oi) => `
+                <div class="mcq-option" data-opt-index="${oi}">
+                    <div class="mcq-radio"></div>
+                    <span>${o.text}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="mcq-explanation" id="mcq-exp-${index}">${q.explanation || ''}</div>
+    `;
+
+    const opts = div.querySelectorAll('.mcq-option');
+    opts.forEach((el, oi) => {
+        el.onclick = () => {
+            if (div.querySelector('.mcq-option.correct')) return;
+            opts.forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedOpt.current = oi;
+            if (onAnswer) onAnswer(oi);
+        };
+    });
+
+    div.showResult = function(correctIndex) {
+        opts.forEach((el, oi) => {
+            el.classList.remove('selected');
+            if (oi === correctIndex) el.classList.add('correct');
+            else if (oi === selectedOpt.current && oi !== correctIndex) el.classList.add('wrong');
+        });
+        const exp = div.querySelector('.mcq-explanation');
+        if (exp) exp.classList.add('show');
+    };
+
+    return div;
+};
+
+// ─── Fill-in-the-Blank Component ─────────────────────────────────────
+Components.fillBlankItem = function(fb, index) {
+    const div = document.createElement('div');
+    div.className = 'fill-blank-item';
+    div.innerHTML = `
+        <div class="fill-blank-sentence">${fb.sentence}</div>
+        <input class="fill-blank-input" id="fb-${index}" placeholder="${I18n.locale === 'fa' ? 'پاسخ خود را بنویسید...' : 'Type your answer...'}" autocomplete="off">
+        <button class="btn btn-sm btn-secondary" id="fb-check-${index}" style="width:auto;margin-top:4px;font-size:11px;">${I18n.locale === 'fa' ? 'بررسی' : 'Check'}</button>
+        <span id="fb-result-${index}" style="font-size:12px;margin-left:8px;"></span>
+    `;
+
+    setTimeout(() => {
+        const input = document.getElementById(`fb-${index}`);
+        const checkBtn = document.getElementById(`fb-check-${index}`);
+        const result = document.getElementById(`fb-result-${index}`);
+        const check = () => {
+            const ans = input.value.trim().toLowerCase();
+            const correct = fb.answer.toLowerCase();
+            if (ans === correct) {
+                input.className = 'fill-blank-input correct';
+                result.textContent = '✅';
+                result.style.color = 'var(--success)';
+            } else {
+                input.className = 'fill-blank-input wrong';
+                result.textContent = `❌ ${I18n.locale === 'fa' ? 'پاسخ صحیح: ' : 'Correct answer: '}${fb.answer}`;
+                result.style.color = 'var(--error)';
+            }
+        };
+        checkBtn.onclick = check;
+        input.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    }, 0);
+
+    return div;
+};
+
+// ─── Writing Exercise Component ──────────────────────────────────────
+Components.writingItem = function(we, index) {
+    const div = document.createElement('div');
+    div.className = 'writing-item';
+    div.innerHTML = `
+        <div class="writing-prompt">📝 ${we.prompt}</div>
+        ${we.rubric ? `<div class="writing-rubric">📋 ${we.rubric}</div>` : ''}
+        <textarea class="writing-textarea" id="writing-${index}" placeholder="${I18n.locale === 'fa' ? 'کد یا توضیحات خود را بنویسید...' : 'Write your code or explanation here...'}"></textarea>
+    `;
+    return div;
 };

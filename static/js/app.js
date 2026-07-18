@@ -2,10 +2,14 @@ const App = {
     currentPage: null,
 
     async init() {
-        // Auto-enable guest mode for first-time visitors
         if (!API.isAuthenticated() && !Auth.isGuest()) {
             Auth.enableGuest();
         }
+
+        // Set locale from user preference or localStorage
+        const savedLocale = localStorage.getItem('preferred_language') || Auth.user?.preferred_language || 'fa';
+        I18n.setLocale(savedLocale);
+
         await Auth.loadUser();
         const path = window.location.pathname;
         this.routePath(path);
@@ -22,8 +26,8 @@ const App = {
             this.navigate(parts[0]);
         } else if (parts.length === 2) {
             this.navigate(`${parts[0]}/${parts[1]}`);
-        } else if (parts.length >= 3) {
-            this.navigate(`${parts[0]}/${parts[1]}`);
+        } else if (parts.length === 3) {
+            this.navigate(`${parts[0]}/${parts[1]}/${parts[2]}`);
         }
     },
 
@@ -37,30 +41,39 @@ const App = {
 
     async navigate(page) {
         const loggedIn = this.isLoggedIn();
-        const canBrowse = this.canAccess();
 
-        // Completely open access - login/register are optional
-        // Only redirect logged-in users away from auth pages
         if (loggedIn && (page === 'login' || page === 'register')) {
             page = 'dashboard';
         }
 
         this.currentPage = page;
-        const url = page === 'dashboard' ? '/' : `/${page}`;
-        window.history.pushState({ page }, '', url);
-        document.title = `LearnApp${page !== 'dashboard' ? ' - ' + page : ''}`;
         const parts = page.split('/');
         const base = parts[0];
         const id = parts[1];
+        const id2 = parts[2];
+
+        let url = '/';
+        if (page === 'dashboard') url = '/';
+        else if (page === 'levels') url = '/levels';
+        else if (base === 'level') url = `/level/${id}`;
+        else if (base === 'deepdive') url = `/deepdive/${id}/${id2}`;
+        else url = `/${page}`;
+
+        window.history.pushState({ page }, '', url);
+        document.title = `${I18n.t('app.name')} — ${page !== 'dashboard' ? page : I18n.t('app.tagline')}`;
+
         switch (base) {
             case 'login': await Pages.login(); break;
             case 'register': await Pages.register(); break;
-            case 'roadmap': await Pages.roadmap(); break;
             case 'dashboard': await Pages.dashboard(); break;
+            case 'levels': await Pages.levels(); break;
+            case 'level': await Pages.levelDetail(parseInt(id)); break;
+            case 'deepdive': await Pages.deepDiveLesson(parseInt(id), parseInt(id2)); break;
             case 'course': await Pages.courseDetail(id); break;
             case 'lesson': await Pages.lessonDetail(parseInt(id)); break;
             case 'challenge': await Pages.challengeDetail(parseInt(id)); break;
             case 'quiz': await Pages.quizDetail(parseInt(id)); break;
+            case 'roadmap': await Pages.roadmap(); break;
             case 'leaderboard': await Pages.leaderboard(); break;
             case 'profile': await Pages.profile(); break;
             case 'settings': await Pages.settings(); break;
@@ -72,7 +85,6 @@ const App = {
             default: await Pages.dashboard(); break;
         }
 
-        // Show onboarding overlay if guest hasn't completed it
         if (page !== 'login' && page !== 'register') {
             const profile = Auth.loadGuestProfile();
             if (Auth.isGuest() && (!profile.name || !profile.age)) {

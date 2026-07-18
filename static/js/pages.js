@@ -196,9 +196,9 @@ const Pages = {
         const quickActions = document.createElement('div');
         quickActions.style.cssText = 'padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap;';
         quickActions.innerHTML = `
-            <button class="btn btn-sm btn-secondary" onclick="App.navigate('leaderboard')" style="flex:1;min-width:100px;">🏆 Leaderboard</button>
-            <button class="btn btn-sm btn-secondary" onclick="App.navigate('profile')" style="flex:1;min-width:100px;">👤 Profile</button>
-            <button class="btn btn-sm btn-secondary" onclick="App.navigate('projects')" style="flex:1;min-width:100px;">📁 Projects</button>
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('leaderboard')" style="flex:1;min-width:100px;">🏆 ${I18n.t('nav.leaderboard')}</button>
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('levels')" style="flex:1;min-width:100px;">📚 ${I18n.t('levels.title')}</button>
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('profile')" style="flex:1;min-width:100px;">👤 ${I18n.t('nav.profile')}</button>
         `;
         app.appendChild(quickActions);
 
@@ -1329,5 +1329,284 @@ const Pages = {
             { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
             { id: 'profile', icon: '👤', label: 'Profile' },
         ], 'dashboard'));
+    },
+
+    // ─── Deep-Dive: Level Browser ──────────────────────────────────────
+    async levels() {
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+        app.appendChild(Components.pageHeader(I18n.t('levels.title'), I18n.t('levels.subtitle')));
+
+        const container = document.createElement('div');
+        container.className = 'course-list';
+        container.appendChild(Components.spinner());
+        app.appendChild(container);
+
+        const { ok, data } = await API.get('/deepdive/levels/');
+        container.innerHTML = '';
+
+        if (ok && data.results && data.results.length > 0) {
+            data.results.forEach(lvl => {
+                const card = document.createElement('div');
+                card.className = 'level-card';
+                const pct = lvl.subsection_count > 0 ? Math.round((lvl.completed_count / lvl.subsection_count) * 100) : 0;
+                card.innerHTML = `
+                    <div class="level-card-icon">${lvl.icon || '📘'}</div>
+                    <div class="level-card-info">
+                        <div class="level-card-title">${lvl.title}</div>
+                        <div class="level-card-subtitle">${lvl.subtitle || ''}</div>
+                        <div class="level-card-progress">${lvl.subsection_count} ${I18n.t('course.modules')} · ${pct}% ${I18n.t('level.progress')}</div>
+                    </div>
+                    <div style="font-size:20px;">◀</div>
+                `;
+                card.onclick = () => App.navigate(`level/${lvl.number}`);
+                container.appendChild(card);
+            });
+        } else {
+            container.innerHTML = '<p style="padding:20px;text-align:center;color:var(--text-muted);">' + I18n.t('progress.no_courses') + '</p>';
+        }
+
+        app.appendChild(Components.nav([
+            { id: 'dashboard', icon: '🏠', label: I18n.t('nav.home') },
+            { id: 'levels', icon: '📚', label: I18n.t('levels.title') },
+            { id: 'profile', icon: '👤', label: I18n.t('nav.profile') },
+        ], 'levels'));
+    },
+
+    // ─── Deep-Dive: Level Detail (10 subsections) ──────────────────────
+    async levelDetail(levelNumber) {
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+        app.appendChild(Components.spinner());
+
+        const { ok: lOk, data: level } = await API.get(`/deepdive/levels/${levelNumber}/`);
+        app.innerHTML = '';
+        if (!lOk) {
+            app.innerHTML = `<p style="padding:20px;">${I18n.locale === 'fa' ? 'سطح مورد نظر یافت نشد.' : 'Level not found.'} <a style="color:var(--accent);cursor:pointer;" onclick="App.navigate('levels')">${I18n.locale === 'fa' ? 'بازگشت به سطوح' : 'Back to levels'}</a></p>`;
+            return;
+        }
+
+        app.appendChild(Components.backButton());
+        app.appendChild(Components.pageHeader(`${level.icon || '📘'} ${level.title}`, level.subtitle || ''));
+
+        const subsections = level.subsections || [];
+        const pct = level.subsection_count > 0 ? Math.round((level.completed_count / level.subsection_count) * 100) : 0;
+
+        const progressBar = document.createElement('div');
+        progressBar.style.cssText = 'margin:0 16px 12px;';
+        progressBar.innerHTML = `
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:4px;">
+                <span>${I18n.t('level.progress')}</span><span>${level.completed_count}/${level.subsection_count}</span>
+            </div>
+            <div style="height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;transition:width 0.5s;"></div>
+            </div>
+        `;
+        app.appendChild(progressBar);
+
+        subsections.forEach(sub => {
+            const item = document.createElement('div');
+            item.className = `subsection-item${sub.is_exam ? ' exam' : ''}${sub.is_premium ? ' premium' : ''}`;
+            const hasGoldenKey = false;
+            if (hasGoldenKey) item.classList.add('golden');
+            const statusIcon = hasGoldenKey ? '✅' : (sub.is_exam ? '📝' : (sub.is_premium ? '⭐' : '📖'));
+            item.innerHTML = `
+                <div class="subsection-num">${sub.number}</div>
+                <div class="subsection-info">
+                    <div class="subsection-title">${sub.title}</div>
+                    <div class="subsection-desc">${sub.description || ''}</div>
+                </div>
+                <div>
+                    ${sub.is_exam ? `<span class="subsection-badge exam">${I18n.t('subsection.exam')}</span>` : ''}
+                    ${sub.is_premium ? `<span class="subsection-badge premium">${I18n.t('subsection.premium')}</span>` : ''}
+                    ${hasGoldenKey ? `<span class="subsection-badge done">${I18n.t('subsection.done')}</span>` : ''}
+                </div>
+                <div class="subsection-status">${statusIcon}</div>
+            `;
+            item.onclick = () => {
+                if (sub.is_premium && !API.isAuthenticated()) {
+                    alert(I18n.locale === 'fa' ? 'این بخش نیاز به اشتراک پریمیوم دارد.' : 'This section requires Premium subscription.');
+                    return;
+                }
+                App.navigate(`deepdive/${levelNumber}/${sub.id}`);
+            };
+            app.appendChild(item);
+        });
+
+        // Certificate section
+        if (level.completed_count >= level.subsection_count) {
+            const certBox = document.createElement('div');
+            certBox.style.cssText = 'margin:16px;padding:20px;background:linear-gradient(135deg,#1a2e1a,#1a1a2e);border-radius:var(--radius);border:1px solid var(--success);text-align:center;';
+            certBox.innerHTML = `
+                <div style="font-size:48px;">🏆</div>
+                <div style="font-size:18px;font-weight:700;color:var(--success);margin:8px 0;">${I18n.t('certificate.title')}</div>
+                <p style="font-size:13px;color:var(--text-secondary);">${I18n.locale === 'fa' ? 'تبریک! شما تمام زیربخش‌های این سطح را تکمیل کرده‌اید.' : 'Congratulations! You completed all subsections in this level.'}</p>
+            `;
+            app.appendChild(certBox);
+        }
+
+        app.appendChild(Components.nav([
+            { id: 'dashboard', icon: '🏠', label: I18n.t('nav.home') },
+            { id: 'levels', icon: '📚', label: I18n.t('levels.title') },
+            { id: 'profile', icon: '👤', label: I18n.t('nav.profile') },
+        ], 'levels'));
+    },
+
+    // ─── Deep-Dive: Full Lesson View ────────────────────────────────────
+    async deepDiveLesson(levelNumber, subsectionId) {
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+        app.appendChild(Components.spinner());
+
+        const { ok, data: sub } = await API.get(`/deepdive/levels/${levelNumber}/subsections/${subsectionId}/`);
+        app.innerHTML = '';
+
+        if (!ok) {
+            app.innerHTML = `<p style="padding:20px;">${I18n.locale === 'fa' ? 'درس مورد نظر یافت نشد.' : 'Lesson not found.'}</p>`;
+            return;
+        }
+
+        app.appendChild(Components.backButton());
+        app.appendChild(Components.pageHeader(sub.title, sub.is_exam ? `📝 ${I18n.t('subsection.exam')}` : `+${sub.golden_key_threshold} IQ`));
+
+        // Golden Key widget
+        const totalIQ = 0;
+        const goldenKeyEarned = false;
+        if (!sub.is_exam) {
+            app.appendChild(Components.goldenKeyWidget(totalIQ, sub.golden_key_threshold, goldenKeyEarned));
+        }
+
+        if (sub.is_exam) {
+            // ── EXAM MODE ──
+            const examDesc = document.createElement('div');
+            examDesc.style.cssText = 'padding:0 16px 12px;font-size:13px;color:var(--text-secondary);';
+            examDesc.textContent = I18n.locale === 'fa' ? 'به سوالات زیر پاسخ دهید. حداقل ۷۰٪ نمره برای قبولی الزامی است.' : 'Answer the questions below. 70% score required to pass.';
+            app.appendChild(examDesc);
+
+            const container = document.createElement('div');
+            container.className = 'deepdive-section';
+            container.innerHTML = `<h3>📝 ${I18n.t('lesson.mcqs')} (${I18n.locale === 'fa' ? 'آزمون' : 'Exam'})</h3><div class="deepdive-content mcq-list"></div>`;
+            const list = container.querySelector('.mcq-list');
+            const mcqs = sub.mcqs && sub.mcqs.length > 0 ? sub.mcqs : [];
+            const mcqWidgets = [];
+            mcqs.forEach((q, i) => {
+                const w = Components.mcqQuestion(q, i);
+                list.appendChild(w);
+                mcqWidgets.push(w);
+            });
+            app.appendChild(container);
+
+            const btnGrp = document.createElement('div');
+            btnGrp.className = 'btn-group';
+            btnGrp.innerHTML = '<button class="btn btn-primary" id="submit-exam">' + (I18n.locale === 'fa' ? 'ثبت آزمون' : 'Submit Exam') + '</button>';
+            app.appendChild(btnGrp);
+
+            document.getElementById('submit-exam').onclick = () => {
+                let correct = 0;
+                mcqs.forEach((q, i) => {
+                    const selected = mcqWidgets[i].querySelector('.mcq-option.selected');
+                    const selectedIndex = selected ? parseInt(selected.dataset.optIndex) : -1;
+                    const correctIndex = q.options.findIndex(o => o.correct);
+                    mcqWidgets[i].showResult(correctIndex);
+                    if (selectedIndex === correctIndex) correct++;
+                });
+                const total = mcqs.length;
+                const passed = correct >= Math.ceil(total * 0.7);
+                const overlay = Components.resultOverlay({
+                    passed,
+                    success: passed,
+                    title: passed ? '🎉 ' + I18n.t('result.passed') : I18n.t('result.try_again'),
+                    message: `${correct}/${total} ${I18n.locale === 'fa' ? 'صحیح' : 'correct'}`,
+                    xp_earned: passed ? 50 : 0,
+                    total_xp: 0,
+                }, `App.navigate('level/${levelNumber}')`);
+                document.body.appendChild(overlay);
+            };
+        } else {
+            // ── LESSON MODE ──
+
+            // Theory section
+            if (sub.theory) {
+                const theorySection = document.createElement('div');
+                theorySection.className = 'deepdive-section';
+                theorySection.innerHTML = `<h3>📖 ${I18n.t('lesson.theory')}</h3><div class="deepdive-content">${sub.theory}</div>`;
+                app.appendChild(theorySection);
+            }
+
+            // MCQs section - 30 questions
+            if (sub.mcqs && sub.mcqs.length > 0) {
+                const mcqSection = document.createElement('div');
+                mcqSection.className = 'deepdive-section';
+                mcqSection.innerHTML = `<h3>❓ ${I18n.t('lesson.mcqs')} (${sub.mcqs.length})</h3><div class="deepdive-content mcq-list"></div>`;
+                const list = mcqSection.querySelector('.mcq-list');
+                sub.mcqs.forEach((q, i) => {
+                    list.appendChild(Components.mcqQuestion(q, i));
+                });
+                app.appendChild(mcqSection);
+
+                // Check answers button
+                const checkBtn = document.createElement('div');
+                checkBtn.className = 'btn-group';
+                checkBtn.innerHTML = `<button class="btn btn-secondary" id="check-mcqs">${I18n.locale === 'fa' ? 'بررسی پاسخ‌ها' : 'Check Answers'}</button>`;
+                app.appendChild(checkBtn);
+
+                setTimeout(() => {
+                    document.getElementById('check-mcqs').onclick = () => {
+                        const mcqItems = mcqSection.querySelectorAll('.mcq-item');
+                        let correct = 0;
+                        sub.mcqs.forEach((q, i) => {
+                            const item = mcqItems[i];
+                            if (item) {
+                                const selected = item.querySelector('.mcq-option.selected');
+                                const selectedIndex = selected ? parseInt(selected.dataset.optIndex) : -1;
+                                const correctIndex = q.options.findIndex(o => o.correct);
+                                if (item.showResult) item.showResult(correctIndex);
+                                if (selectedIndex === correctIndex) correct++;
+                            }
+                        });
+                        alert(`${correct}/${sub.mcqs.length} ${I18n.locale === 'fa' ? 'پاسخ صحیح' : 'correct answers'}`);
+                    };
+                }, 100);
+            }
+
+            // Fill in the blanks
+            if (sub.fill_blanks && sub.fill_blanks.length > 0) {
+                const fbSection = document.createElement('div');
+                fbSection.className = 'deepdive-section';
+                fbSection.innerHTML = `<h3>✍️ ${I18n.t('lesson.fill_blanks')} (${sub.fill_blanks.length})</h3><div class="deepdive-content"></div>`;
+                const fbContent = fbSection.querySelector('.deepdive-content');
+                sub.fill_blanks.forEach((fb, i) => {
+                    fbContent.appendChild(Components.fillBlankItem(fb, `${subsectionId}-${i}`));
+                });
+                app.appendChild(fbSection);
+            }
+
+            // Writing exercises
+            if (sub.writing_exercises && sub.writing_exercises.length > 0) {
+                const wrSection = document.createElement('div');
+                wrSection.className = 'deepdive-section';
+                wrSection.innerHTML = `<h3>📝 ${I18n.t('lesson.writing')} (${sub.writing_exercises.length})</h3><div class="deepdive-content"></div>`;
+                const wrContent = wrSection.querySelector('.deepdive-content');
+                sub.writing_exercises.forEach((we, i) => {
+                    wrContent.appendChild(Components.writingItem(we, `${subsectionId}-${i}`));
+                });
+                app.appendChild(wrSection);
+            }
+
+            // Markdown export
+            const mdContainer = document.createElement('div');
+            mdContainer.style.cssText = 'padding: 0 16px;';
+            mdContainer.appendChild(Components.markdownExportButton(levelNumber, subsectionId));
+            app.appendChild(mdContainer);
+
+            // Practice Terminal (persistent CLI)
+            app.appendChild(Components.practiceTerminal(subsectionId));
+        }
+
+        app.appendChild(Components.nav([
+            { id: 'dashboard', icon: '🏠', label: I18n.t('nav.home') },
+            { id: 'levels', icon: '📚', label: I18n.t('levels.title') },
+            { id: 'profile', icon: '👤', label: I18n.t('nav.profile') },
+        ], 'levels'));
     },
 };

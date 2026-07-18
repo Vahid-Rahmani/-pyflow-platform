@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/courses/', include('courses.urls')),
     path('api/sandbox/', include('sandbox.urls')),
     path('api/subscriptions/', include('subscriptions.urls')),
+    path('api/deepdive/', include('deepdive.urls')),
     path('accounts/', include('allauth.urls')),
     re_path(r'^.*$', views.index, name='index'),
 ]
