@@ -27,6 +27,7 @@ const Auth = {
         const { ok, data } = await API.post('/auth/login/', { username, password });
         if (ok) {
             API.setTokens(data.access, data.refresh);
+            this.disableGuest();
             await this.loadUser();
             return { ok: true };
         }
@@ -39,6 +40,7 @@ const Auth = {
         });
         if (ok) {
             API.setTokens(data.access, data.refresh);
+            this.disableGuest();
             this.user = data.user;
             return { ok: true };
         }

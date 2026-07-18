@@ -5,33 +5,34 @@ const Pages = {
         const user = Auth.user;
         const isGuest = Auth.isGuest();
 
-        const hasUser = user && !isGuest;
-        const welcomeMsg = isGuest ? 'Explore courses as a guest' : (hasUser ? 'Continue your journey' : 'Learn Python interactively');
+        const welcomeMsg = user ? (isGuest ? 'Explore as a guest' : 'Continue your journey') : 'Learn Python interactively';
 
         app.appendChild(Components.pageHeader('LearnApp', welcomeMsg));
 
-        if (hasUser) {
-            app.appendChild(Components.statCards([
-                { value: user.xp, label: 'XP' },
-                { value: user.level, label: 'Level' },
-                { value: user.streak_count || 0, label: 'Day Streak' },
-            ]));
-        } else if (isGuest) {
+        if (isGuest) {
             const guestBanner = document.createElement('div');
-            guestBanner.style.cssText = 'margin:0 16px 12px;padding:12px 16px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;';
+            guestBanner.style.cssText = 'margin:0 16px 12px;padding:10px 16px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;';
             guestBanner.innerHTML = `
-                <div style="font-size:13px;">👤 Browsing as <strong>Guest</strong></div>
-                <button class="btn btn-sm btn-primary" onclick="App.navigate('login')" style="width:auto;">Log in</button>
+                <div style="font-size:13px;display:flex;align-items:center;gap:6px;"><span>👤</span> Browsing as <strong>Guest</strong></div>
+                <button class="btn btn-sm btn-primary" onclick="App.navigate('register')" style="width:auto;font-size:11px;padding:6px 12px;">Sign up free</button>
             `;
             app.appendChild(guestBanner);
+        }
+
+        if (user) {
+            app.appendChild(Components.statCards([
+                { value: isGuest ? '-' : user.xp, label: 'XP' },
+                { value: isGuest ? '-' : user.level, label: 'Level' },
+                { value: isGuest ? '-' : (user.streak_count || 0), label: 'Day Streak' },
+            ]));
         }
 
         const quickActions = document.createElement('div');
         quickActions.style.cssText = 'padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap;';
         quickActions.innerHTML = `
-            <button class="btn btn-sm btn-primary" onclick="App.navigate('projects')" style="flex:1;min-width:100px;">📁 My Projects</button>
-            <button class="btn btn-sm btn-secondary" onclick="App.navigate('projects/new')" style="flex:1;min-width:100px;">➕ New Project</button>
             <button class="btn btn-sm btn-secondary" onclick="App.navigate('leaderboard')" style="flex:1;min-width:100px;">🏆 Leaderboard</button>
+            <button class="btn btn-sm btn-secondary" onclick="App.navigate('profile')" style="flex:1;min-width:100px;">👤 Profile</button>
+            ${isGuest ? '' : '<button class="btn btn-sm btn-secondary" onclick="App.navigate(\'projects\')" style="flex:1;min-width:100px;">📁 Projects</button>'}
         `;
         app.appendChild(quickActions);
 
@@ -45,7 +46,7 @@ const Pages = {
         container.appendChild(Components.spinner());
         app.appendChild(container);
 
-        const { ok, data } = await API.get('/courses/');
+        const { ok, data } = await API.get('/courses/', !isGuest);
         container.innerHTML = '';
         if (ok && data.results) {
             data.results.forEach(c => container.appendChild(Components.courseCard(c)));
@@ -599,9 +600,11 @@ const Pages = {
             guestCard.innerHTML = `
                 <div style="font-size:48px;margin-bottom:12px;">👤</div>
                 <div style="font-size:20px;font-weight:700;margin-bottom:4px;">Guest</div>
-                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">You are browsing as a guest. Sign up to save progress and get full access!</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">You are browsing as a guest.</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Sign up to save progress and unlock all features!</div>
                 <button class="btn btn-primary" onclick="App.navigate('register')">Create Free Account</button>
-                <button class="btn btn-secondary" onclick="Auth.logout()" style="margin-top:8px;">Switch Account</button>
+                <button class="btn btn-secondary" onclick="App.navigate('login')" style="margin-top:8px;">I have an account</button>
+                <button class="btn btn-sm btn-secondary" onclick="Auth.logout()" style="margin-top:8px;width:auto;">← Back to login</button>
             `;
             app.appendChild(guestCard);
             app.appendChild(Components.nav([

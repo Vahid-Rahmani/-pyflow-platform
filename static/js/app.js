@@ -17,7 +17,7 @@ const App = {
 
     routePath(path) {
         if (path === '/' || path === '') {
-            this.navigate(API.isAuthenticated() || Auth.isGuest() ? 'dashboard' : 'login');
+            this.navigate(this.canAccess() ? 'dashboard' : 'login');
             return;
         }
         const parts = path.split('/').filter(Boolean);
@@ -30,20 +30,36 @@ const App = {
         }
     },
 
+    canAccess() {
+        return API.isAuthenticated() || Auth.isGuest();
+    },
+
+    isLoggedIn() {
+        return API.isAuthenticated() && !Auth.isGuest();
+    },
+
     async navigate(page) {
-        const hasAuth = API.isAuthenticated() || Auth.isGuest();
-        if (!hasAuth && page !== 'login' && page !== 'register') {
+        const loggedIn = this.isLoggedIn();
+        const canBrowse = this.canAccess();
+
+        // Unauthenticated (no JWT, no guest) can only see login/register
+        if (!canBrowse && page !== 'login' && page !== 'register') {
             page = 'login';
         }
-        if (hasAuth && (page === 'login' || page === 'register')) {
+
+        // Fully logged-in users skip login/register pages
+        if (loggedIn && (page === 'login' || page === 'register')) {
             page = 'dashboard';
         }
-        if (hasAuth && page === 'dashboard' && Auth.user && !Auth.isGuest()) {
+
+        // Check onboarding for registered users
+        if (loggedIn && page === 'dashboard' && Auth.user) {
             const onboardingRes = await API.get('/auth/onboarding/');
             if (onboardingRes.ok && !onboardingRes.data.onboarding_complete) {
                 page = 'onboarding';
             }
         }
+
         this.currentPage = page;
         const url = page === 'dashboard' ? '/' : `/${page}`;
         window.history.pushState({ page }, '', url);
